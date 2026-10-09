@@ -1,4 +1,3 @@
-// Đường dẫn: src/main/java/com/hoamocanh/controller/customer/CustomerDesignController.java
 package com.hoamocanh.controller.customer;
 
 import com.hoamocanh.core.entity.Material;
@@ -20,29 +19,26 @@ public class CustomerDesignController {
 
     private final CustomerDesignService designService;
 
-    /**
-     * API: Load nguyên liệu phù hợp với loại sản phẩm và ngân sách
-     */
     @GetMapping("/materials")
     public ResponseEntity<List<Material>> getMaterialsForDesign(
             @RequestParam Integer productType,
-            @RequestParam BigDecimal budgetLevel) { // FIX: Thêm tham số budgetLevel
-
-        // Truyền cả 2 tham số xuống Service
+            @RequestParam BigDecimal budgetLevel) {
         List<Material> materials = designService.getAvailableMaterialsForDesign(productType, budgetLevel);
         return ResponseEntity.ok(materials);
     }
 
     @PostMapping("/validate")
     public ResponseEntity<Map<String, String>> validateCart(
-            @RequestParam Integer productType,
+            @RequestParam Integer productType, // Vẫn giữ tham số này để không làm hỏng request từ Frontend
             @RequestParam BigDecimal budgetLevel,
             @RequestBody List<DesignItemReq> items) {
 
-        Map<Long, Integer> itemMap = items.stream()
+        Map<Integer, Integer> itemMap = items.stream()
                 .collect(Collectors.toMap(DesignItemReq::getMaterialId, DesignItemReq::getQuantity));
 
-        designService.validateDesignCart(productType, budgetLevel, itemMap);
+        // ĐÃ FIX: Chỉ truyền 2 tham số đúng với Service (Bỏ productType)
+        designService.validateDesignCart(budgetLevel, itemMap);
+
         return ResponseEntity.ok(Map.of("status", "success", "message", "Thiết kế hợp lệ với ngân sách"));
     }
 }

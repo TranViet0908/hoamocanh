@@ -20,8 +20,9 @@ public class AdminOrderController {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
+    // FIX: Đổi Long id thành Integer id[cite: 20, 27]
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Order> updateStatus(@PathVariable Long id, @RequestParam String status) {
+    public ResponseEntity<Order> updateStatus(@PathVariable Integer id, @RequestParam String status) {
         return ResponseEntity.ok(orderService.updateOrderStatus(id, status));
     }
 }

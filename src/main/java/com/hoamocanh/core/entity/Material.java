@@ -2,6 +2,9 @@ package com.hoamocanh.core.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -13,39 +16,42 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Material {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
-    @Column(nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @Column(nullable = false, length = 150)
     private String name;
 
-    @Column(nullable = false, length = 50)
-    private String type; // MAIN_FLOWER, SUB_FLOWER, LEAF, PACKAGING, ACCESSORY
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-    @Column(name = "supported_product_types", nullable = false, length = 50)
-    private String supportedProductTypes; // Ví dụ: "1,2,3,4,5,6"
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "stock_quantity", nullable = false)
-    private Integer stockQuantity;
+    @Column(nullable = false)
+    private Integer stock;
 
-    @Column(length = 20)
-    private String status; // AVAILABLE, OUT_OF_STOCK, HIDDEN
-
-    // GIẢI QUYẾT RỦI RO "CHÁY HÀNG" KHI NHIỀU KHÁCH CÙNG ĐẶT:
-    // Sử dụng Optimistic Locking. Hibernate sẽ tự động tăng giá trị này.
-    // Nếu có 2 luồng cùng update 1 bản ghi với cùng 1 version, luồng sau sẽ bị văng OptimisticLockException.
+    // Cơ chế chống Race Condition khi nhiều khách cùng mua
     @Version
-    @Column(columnDefinition = "int default 0")
+    @Column(columnDefinition = "int default 1")
     private Integer version;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "is_deleted", columnDefinition = "tinyint(1) default 0")
+    private Boolean isDeleted;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }

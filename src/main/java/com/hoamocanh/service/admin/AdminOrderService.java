@@ -16,16 +16,14 @@ public class AdminOrderService {
     private final OrderRepository orderRepository;
 
     public List<Order> getAllOrders() {
-        // Lấy danh sách đơn hàng, ưu tiên đơn mới nhất lên đầu
         return orderRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     @Transactional
-    public Order updateOrderStatus(Long orderId, String newStatus) {
+    public Order updateOrderStatus(Integer orderId, String newStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng"));
 
-        // Trạng thái: CONFIRMED (Chờ duyệt) -> PROCESSING (Đang làm/Chuẩn bị nguyên liệu) -> COMPLETED (Hoàn tất)
         order.setStatus(newStatus);
         return orderRepository.save(order);
     }

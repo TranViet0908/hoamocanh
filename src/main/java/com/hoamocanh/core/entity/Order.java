@@ -2,6 +2,9 @@ package com.hoamocanh.core.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,53 +17,81 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class Order {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
-    @Column(name = "order_code", nullable = false, unique = true, length = 50)
-    private String orderCode;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    @Column(name = "customer_name", nullable = false)
-    private String customerName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_type_id")
+    private ProductType productType;
 
-    @Column(name = "customer_phone", nullable = false, length = 20)
-    private String customerPhone;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "voucher_id")
+    private Voucher voucher;
 
-    @Column(name = "product_type", nullable = false)
-    private Integer productType;
+    @Column(nullable = false, length = 50)
+    private String status; // PENDING, PROCESSING, COMPLETED, CANCELLED
 
-    @Column(name = "budget_level", nullable = false, precision = 10, scale = 2)
-    private BigDecimal budgetLevel;
-
-    @Column(name = "output_type", nullable = false, length = 50)
-    private String outputType; // ONLINE, AT_STORE, BY_MOCANH
+    @Column(name = "payment_status", length = 20)
+    private String paymentStatus; // UNPAID, DEPOSITED, PAID
 
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    private BigDecimal discountAmount;
+
+    @Column(name = "deposit_amount", precision = 10, scale = 2)
+    private BigDecimal depositAmount;
+
     @Column(length = 50)
-    private String status; // DRAFT, CONFIRMED, PROCESSING, COMPLETED, CANCELLED
+    private String style;
 
-    @Column(name = "delivery_address", columnDefinition = "TEXT")
-    private String deliveryAddress;
+    @Column(name = "theme_color", length = 50)
+    private String themeColor;
 
-    @Column(name = "appointment_time")
-    private LocalDateTime appointmentTime;
+    @Column(name = "style_note", columnDefinition = "TEXT")
+    private String styleNote;
 
     @Column(name = "gift_message", columnDefinition = "TEXT")
     private String giftMessage;
 
+    @Column(name = "gift_image_url")
+    private String giftImageUrl;
+
+    @Column(name = "gift_video_url")
+    private String giftVideoUrl;
+
     @Column(name = "qr_code_url")
     private String qrCodeUrl;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "delivery_type", length = 50)
+    private String deliveryType; // ONLINE, PICKUP, DELIVERY
+
+    @Column(name = "receiver_name", length = 100)
+    private String receiverName;
+
+    @Column(name = "receiver_phone", length = 20)
+    private String receiverPhone;
+
+    @Column(name = "shipping_address", columnDefinition = "TEXT")
+    private String shippingAddress;
+
+    @Column(name = "delivery_time")
+    private LocalDateTime deliveryTime;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @UpdateTimestamp
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> items;
+    private List<OrderDetail> orderDetails;
 }

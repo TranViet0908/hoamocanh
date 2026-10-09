@@ -14,10 +14,6 @@ public class CustomerOrderController {
 
     private final CustomerOrderService orderService;
 
-    /**
-     * API: Khách hàng chốt đơn
-     * POST /api/customer/orders/checkout
-     */
     @PostMapping("/checkout")
     public ResponseEntity<Order> checkout(@RequestBody CheckoutReq checkoutReq) {
         Order savedOrder = orderService.processCheckout(checkoutReq);

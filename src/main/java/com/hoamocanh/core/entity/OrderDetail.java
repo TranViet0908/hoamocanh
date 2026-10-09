@@ -5,17 +5,16 @@ import lombok.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "order_items")
+@Table(name = "order_details")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderItem {
-
+public class OrderDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
@@ -28,8 +27,6 @@ public class OrderItem {
     @Column(nullable = false)
     private Integer quantity;
 
-    // GIẢI QUYẾT RỦI RO THAY ĐỔI GIÁ:
-    // Lưu lại giá tại thời điểm chốt đơn để tính biên lợi nhuận chính xác.
-    @Column(name = "price_at_time", nullable = false, precision = 10, scale = 2)
-    private BigDecimal priceAtTime;
+    @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal unitPrice;
 }

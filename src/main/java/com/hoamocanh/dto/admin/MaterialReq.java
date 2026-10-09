@@ -5,10 +5,10 @@ import java.math.BigDecimal;
 
 @Data
 public class MaterialReq {
+    private Integer categoryId; // Thay cho type và supportedProductTypes cũ
     private String name;
-    private String type; // MAIN_FLOWER, SUB_FLOWER, LEAF, PACKAGING, ACCESSORY
-    private String supportedProductTypes; // Ví dụ: "1,2,3,4,5,6"
+    private String description;
+    private String imageUrl;
     private BigDecimal price;
-    private Integer stockQuantity;
-    private String status; // AVAILABLE, OUT_OF_STOCK, HIDDEN
+    private Integer stock; // Đổi từ stockQuantity
 }
