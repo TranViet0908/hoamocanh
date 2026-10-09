@@ -1,12 +1,11 @@
 package com.hoamocanh.service.admin;
 
 import com.hoamocanh.core.entity.Material;
-import com.hoamocanh.core.entity.enums.MaterialStatus;
-import com.hoamocanh.dto.admin.MaterialAdminReq;
+import com.hoamocanh.dto.admin.MaterialReq;
 import com.hoamocanh.repository.MaterialRepository;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,56 +15,35 @@ public class AdminMaterialService {
 
     private final MaterialRepository materialRepository;
 
-    // Lấy toàn bộ nguyên liệu (Bao gồm cả các món đã bị ẩn - HIDDEN) để nhân viên quản lý
     public List<Material> getAllMaterials() {
         return materialRepository.findAll();
     }
 
-    // Thêm mới một nguyên liệu vào hệ thống
     @Transactional
-    public Material createMaterial(MaterialAdminReq req) {
-        Material newMaterial = Material.builder()
+    public Material addMaterial(MaterialReq req) {
+        Material material = Material.builder()
                 .name(req.getName())
                 .type(req.getType())
                 .supportedProductTypes(req.getSupportedProductTypes())
                 .price(req.getPrice())
                 .stockQuantity(req.getStockQuantity())
-                .status(req.getStatus() != null ? req.getStatus() : MaterialStatus.AVAILABLE)
-                .imageUrl(req.getImageUrl())
-                .color(req.getColor())
+                // Tự động gán trạng thái dựa trên số lượng nhập kho
+                .status(req.getStockQuantity() > 0 ? "AVAILABLE" : "OUT_OF_STOCK")
                 .build();
-
-        return materialRepository.save(newMaterial);
+        return materialRepository.save(material);
     }
 
-    // Cập nhật thông tin nguyên liệu (Giá, tồn kho, hình ảnh...)
     @Transactional
-    public Material updateMaterial(Long id, MaterialAdminReq req) {
-        Material existingMaterial = materialRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu với ID: " + id));
-
-        existingMaterial.setName(req.getName());
-        existingMaterial.setType(req.getType());
-        existingMaterial.setSupportedProductTypes(req.getSupportedProductTypes());
-        existingMaterial.setPrice(req.getPrice());
-        existingMaterial.setStockQuantity(req.getStockQuantity());
-        existingMaterial.setImageUrl(req.getImageUrl());
-        existingMaterial.setColor(req.getColor());
-
-        if (req.getStatus() != null) {
-            existingMaterial.setStatus(req.getStatus());
-        }
-
-        return materialRepository.save(existingMaterial);
-    }
-
-    // Đổi trạng thái nhanh (Ví dụ: Đánh dấu Hết hàng hoặc Ẩn khỏi Web App)
-    @Transactional
-    public void updateMaterialStatus(Long id, MaterialStatus newStatus) {
+    public Material updateStock(Long id, Integer newStockQuantity) {
         Material material = materialRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nguyên liệu với ID: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy nguyên liệu"));
 
-        material.setStatus(newStatus);
-        materialRepository.save(material);
+        material.setStockQuantity(newStockQuantity);
+        if (newStockQuantity <= 0) {
+            material.setStatus("OUT_OF_STOCK");
+        } else if ("OUT_OF_STOCK".equals(material.getStatus())) {
+            material.setStatus("AVAILABLE");
+        }
+        return materialRepository.save(material);
     }
 }

@@ -2,13 +2,10 @@ package com.hoamocanh.core.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "budget_rules", uniqueConstraints = {
-        @UniqueConstraint(name = "unique_product_budget", columnNames = {"product_type", "budget_level"})
-})
+@Table(name = "budget_rules")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,10 +18,10 @@ public class BudgetRule {
     private Long id;
 
     @Column(name = "product_type", nullable = false)
-    private Integer productType;
+    private Integer productType; // 1: Mix thả bình, 2: Bó, 3: Giỏ...
 
     @Column(name = "budget_level", nullable = false, precision = 10, scale = 2)
-    private BigDecimal budgetLevel;
+    private BigDecimal budgetLevel; // 400000, 500000...
 
     @Column(name = "max_main_flowers", nullable = false)
     private Integer maxMainFlowers;
@@ -37,8 +34,4 @@ public class BudgetRule {
 
     @Column(name = "min_profit_margin", nullable = false, precision = 5, scale = 2)
     private BigDecimal minProfitMargin;
-
-    @Column(name = "is_active")
-    @Builder.Default
-    private Boolean isActive = true;
 }

@@ -1,9 +1,8 @@
 package com.hoamocanh.controller.customer;
 
 import com.hoamocanh.core.entity.Order;
-import com.hoamocanh.dto.customer.OrderSubmitReq;
+import com.hoamocanh.dto.customer.CheckoutReq;
 import com.hoamocanh.service.customer.CustomerOrderService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,17 +12,15 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CustomerOrderController {
 
-    private final CustomerOrderService customerOrderService;
+    private final CustomerOrderService orderService;
 
-    // API: Gửi đơn đặt hàng / Đặt lịch làm hoa
-    // @Valid: Tự động bắt lỗi nếu Frontend truyền thiếu SĐT, Tên, hoặc Giỏ hàng trống
-    @PostMapping("/submit")
-    public ResponseEntity<?> submitOrder(@Valid @RequestBody OrderSubmitReq req) {
-        try {
-            Order savedOrder = customerOrderService.submitOrder(req);
-            return ResponseEntity.ok(savedOrder);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    /**
+     * API: Khách hàng chốt đơn
+     * POST /api/customer/orders/checkout
+     */
+    @PostMapping("/checkout")
+    public ResponseEntity<Order> checkout(@RequestBody CheckoutReq checkoutReq) {
+        Order savedOrder = orderService.processCheckout(checkoutReq);
+        return ResponseEntity.ok(savedOrder);
     }
 }

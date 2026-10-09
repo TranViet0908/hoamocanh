@@ -1,15 +1,9 @@
 package com.hoamocanh.core.entity;
 
-import com.hoamocanh.core.entity.enums.OrderStatus;
-import com.hoamocanh.core.entity.enums.OutputType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -40,17 +34,14 @@ public class Order {
     @Column(name = "budget_level", nullable = false, precision = 10, scale = 2)
     private BigDecimal budgetLevel;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "output_type", nullable = false, length = 50)
-    private OutputType outputType;
+    private String outputType; // ONLINE, AT_STORE, BY_MOCANH
 
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
-    @Enumerated(EnumType.STRING)
     @Column(length = 50)
-    @Builder.Default
-    private OrderStatus status = OrderStatus.DRAFT;
+    private String status; // DRAFT, CONFIRMED, PROCESSING, COMPLETED, CANCELLED
 
     @Column(name = "delivery_address", columnDefinition = "TEXT")
     private String deliveryAddress;
@@ -64,32 +55,12 @@ public class Order {
     @Column(name = "qr_code_url")
     private String qrCodeUrl;
 
-    @Column(name = "style_note")
-    private String styleNote;
-
-    @Column(name = "recipient_name")
-    private String recipientName;
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
-    // Quan hệ 1-N với OrderItem
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<OrderItem> orderItems = new ArrayList<>();
-
-    public void addOrderItem(OrderItem item) {
-        orderItems.add(item);
-        item.setOrder(this);
-    }
-
-    public void removeOrderItem(OrderItem item) {
-        orderItems.remove(item);
-        item.setOrder(null);
-    }
+    private List<OrderItem> items;
 }

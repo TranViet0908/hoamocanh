@@ -2,7 +2,6 @@ package com.hoamocanh.core.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.math.BigDecimal;
 
 @Entity
@@ -29,6 +28,8 @@ public class OrderItem {
     @Column(nullable = false)
     private Integer quantity;
 
+    // GIẢI QUYẾT RỦI RO THAY ĐỔI GIÁ:
+    // Lưu lại giá tại thời điểm chốt đơn để tính biên lợi nhuận chính xác.
     @Column(name = "price_at_time", nullable = false, precision = 10, scale = 2)
     private BigDecimal priceAtTime;
 }

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Chốt đơn — Mộc Anh</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<header class="site-header">
+    <a class="brand" href="/customer/index.html">
+        <span class="brand-mark">MA</span>
+        <span><b>MỘC ANH</b><small>flower studio</small></span>
+    </a>
+    <a href="/customer/index.html">Trang chủ</a>
+</header>
+
+<main class="flow">
+    <div class="flow-shell">
+        <p class="eyebrow">Hoàn tất yêu cầu</p>
+        <h2>Chốt đơn &amp; thanh toán</h2>
+        <p style="color:var(--muted);line-height:1.6;margin:14px 0 24px">
+            Chọn một hình thức thanh toán phù hợp. Nhân viên sẽ xác nhận lại trước khi xử lý.
+        </p>
+
+        <div class="output-tabs">
+            <button type="button" class="selected">Chuyển khoản QR</button>
+            <button type="button">Thanh toán tại tiệm</button>
+            <button type="button">Thanh toán khi nhận</button>
+        </div>
+
+        <form id="checkoutForm">
+            <label>Họ và tên<input name="name" required></label>
+            <label>Số điện thoại<input name="phone" type="tel" required></label>
+            <label>Địa chỉ nhận hàng<textarea name="address" rows="3" required></textarea></label>
+            <label>Ghi chú<textarea name="note" rows="3"></textarea></label>
+            <button class="button button-dark" type="submit">Xác nhận đặt hàng →</button>
+        </form>
+    </div>
+</main>
+
+<script src="/js/customer/checkout.js"></script>
+</body>
+</html>
