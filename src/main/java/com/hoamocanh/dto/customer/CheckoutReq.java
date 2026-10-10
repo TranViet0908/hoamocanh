@@ -29,6 +29,9 @@ public class CheckoutReq {
     private String giftImageUrl;
     private String giftVideoUrl;
 
+    // Hình thức thanh toán: CASH (trực tiếp khi nhận/tại tiệm) | ONLINE
+    private String paymentMethod;
+
     // Khuyến mãi
     private String voucherCode;
 

@@ -1,7 +1,8 @@
 package com.hoamocanh.controller.customer;
 
-import com.hoamocanh.core.entity.Material;
 import com.hoamocanh.dto.customer.DesignItemReq;
+import com.hoamocanh.dto.customer.DesignLimitsRes;
+import com.hoamocanh.dto.customer.MaterialDto;
 import com.hoamocanh.service.customer.CustomerDesignService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,25 +20,32 @@ public class CustomerDesignController {
 
     private final CustomerDesignService designService;
 
+    // Trả DTO thay vì entity: tránh lỗi serialize LAZY category và không lộ version/isDeleted
     @GetMapping("/materials")
-    public ResponseEntity<List<Material>> getMaterialsForDesign(
+    public ResponseEntity<List<MaterialDto>> getMaterialsForDesign(
             @RequestParam Integer productType,
             @RequestParam BigDecimal budgetLevel) {
-        List<Material> materials = designService.getAvailableMaterialsForDesign(productType, budgetLevel);
-        return ResponseEntity.ok(materials);
+        return ResponseEntity.ok(designService.getAvailableMaterialsForDesign(productType, budgetLevel));
+    }
+
+    // MỚI
+    @GetMapping("/limits")
+    public ResponseEntity<DesignLimitsRes> getLimits(@RequestParam BigDecimal budgetLevel) {
+        return ResponseEntity.ok(designService.getLimits(budgetLevel));
     }
 
     @PostMapping("/validate")
     public ResponseEntity<Map<String, String>> validateCart(
-            @RequestParam Integer productType, // Vẫn giữ tham số này để không làm hỏng request từ Frontend
+            @RequestParam Integer productType,
             @RequestParam BigDecimal budgetLevel,
             @RequestBody List<DesignItemReq> items) {
 
+        // Gộp dòng trùng materialId (toMap cũ sẽ ném lỗi nếu trùng), bỏ số lượng <= 0
         Map<Integer, Integer> itemMap = items.stream()
-                .collect(Collectors.toMap(DesignItemReq::getMaterialId, DesignItemReq::getQuantity));
+                .filter(i -> i.getQuantity() != null && i.getQuantity() > 0)
+                .collect(Collectors.toMap(DesignItemReq::getMaterialId, DesignItemReq::getQuantity, Integer::sum));
 
-        // ĐÃ FIX: Chỉ truyền 2 tham số đúng với Service (Bỏ productType)
-        designService.validateDesignCart(budgetLevel, itemMap);
+        designService.validateDesignCart(productType, budgetLevel, itemMap);
 
         return ResponseEntity.ok(Map.of("status", "success", "message", "Thiết kế hợp lệ với ngân sách"));
     }

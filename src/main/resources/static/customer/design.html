@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Thiết kế hoa — Mộc Anh</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/design.css">
 </head>
 <body>
 <header class="site-header">
@@ -32,7 +33,7 @@
         <section class="step active" data-step="1">
             <p class="kicker">01 / Kiểu dáng</p>
             <h3>Bạn muốn tạo nên<br>điều gì hôm nay?</h3>
-            <div class="product-grid" id="productGrid"></div>
+            <div class="product-grid" id="productGrid"><p style="color:var(--muted)">Đang tải...</p></div>
             <div style="margin-top: 20px; display: flex; gap: 10px;">
                 <button type="button" class="button button-dark next-step" style="width: 100%;">Tiếp tục →</button>
             </div>
@@ -55,7 +56,9 @@
         <section class="step" data-step="3">
             <p class="kicker">03 / Cảm hứng</p>
             <h3>Gu của bạn hôm nay<br>mang màu sắc nào?</h3>
-            <div class="choice-grid">
+
+            <p class="mt-sub">Phong cách</p>
+            <div class="choice-grid" data-choice="style">
                 <button type="button" class="choice selected">Dịu dàng</button>
                 <button type="button" class="choice">Tối giản</button>
                 <button type="button" class="choice">Sang trọng</button>
@@ -63,6 +66,29 @@
                 <button type="button" class="choice">Tự nhiên</button>
                 <button type="button" class="choice">Lãng mạn</button>
             </div>
+
+            <p class="mt-sub">Tone màu <small>(không bắt buộc)</small></p>
+            <div class="choice-grid" data-choice="color" data-optional>
+                <button type="button" class="choice"><i class="mt-dot" style="background:#e9b8c4"></i>Hồng pastel</button>
+                <button type="button" class="choice"><i class="mt-dot" style="background:#f4ece0;border:1px solid #d8cfc0"></i>Trắng kem</button>
+                <button type="button" class="choice"><i class="mt-dot" style="background:#b8333f"></i>Đỏ</button>
+                <button type="button" class="choice"><i class="mt-dot" style="background:#f0c24b"></i>Vàng</button>
+                <button type="button" class="choice"><i class="mt-dot" style="background:#9a86c4"></i>Tím lavender</button>
+                <button type="button" class="choice"><i class="mt-dot" style="background:#7fa38a"></i>Xanh lá</button>
+                <button type="button" class="choice"><i class="mt-dot" style="background:linear-gradient(135deg,#e9b8c4,#f0c24b,#9a86c4)"></i>Nhiều màu</button>
+            </div>
+
+            <p class="mt-sub">Mục đích tặng <small>(không bắt buộc)</small></p>
+            <div class="choice-grid" data-choice="occasion" data-optional>
+                <button type="button" class="choice">Sinh nhật</button>
+                <button type="button" class="choice">Kỷ niệm</button>
+                <button type="button" class="choice">Tỏ tình</button>
+                <button type="button" class="choice">Chúc mừng</button>
+                <button type="button" class="choice">Cảm ơn</button>
+                <button type="button" class="choice">Thăm hỏi</button>
+                <button type="button" class="choice">Tặng bản thân</button>
+            </div>
+
             <div style="margin-top: 20px; display: flex; gap: 10px;">
                 <button type="button" class="button button-light prev-step" style="flex: 1;">← Quay lại</button>
                 <button type="button" class="button button-dark next-step" style="flex: 2;">Chọn nguyên liệu →</button>
@@ -79,12 +105,15 @@
                 <button type="button" data-filter="accessory">Phụ kiện</button>
                 <button type="button" data-filter="packaging">Bao bì</button>
             </div>
-            <div class="material-list" id="materials"></div>
+            <div class="mt-limits" id="limitBar"></div>
+            <div class="mt-list" id="materials"></div>
             <div class="cart-sticky">
                 <div>
                     <span id="cartCount">0</span> nguyên liệu
                     <strong id="cartTotal">0đ</strong>
                     <small id="budgetMessage"></small>
+                    <button type="button" id="raiseBudget" class="mt-raise" hidden></button>
+                    <div class="mt-thumbs" id="cartThumbs"></div>
                 </div>
                 <button type="button" id="validate" class="button button-light">Kiểm tra ngân sách</button>
             </div>
@@ -99,9 +128,11 @@
             <p class="kicker">05 / Hình dung</p>
             <h3>Những gì bạn chọn,<br>khi đặt cạnh nhau</h3>
             <div class="moodboard">
-                <img src="https://images.unsplash.com/photo-1527061011665-3652c757a4d4?auto=format&fit=crop&w=1000&q=85" alt="Moodboard hoa tươi">
-                <div class="mood-note">Hình ảnh mô phỏng. Sản phẩm thực tế thay đổi theo nguồn hoa tươi trong ngày.</div>
+                <div class="mt-collage" id="collage" hidden></div>
+                <img id="moodFallback" src="https://images.unsplash.com/photo-1527061011665-3652c757a4d4?auto=format&fit=crop&w=1000&q=85" alt="Moodboard hoa tươi">
+                <div class="mood-note"><span id="moodItems"></span><br>Hình ảnh mô phỏng. Sản phẩm thực tế thay đổi theo nguồn hoa tươi trong ngày.</div>
             </div>
+            <div id="designSummary"></div>
             <div style="margin-top: 20px; display: flex; gap: 10px;">
                 <button type="button" class="button button-light prev-step" style="flex: 1;">← Quay lại</button>
                 <button type="button" class="button button-dark next-step" style="flex: 2;">Chốt đơn →</button>
@@ -110,7 +141,9 @@
 
         <!-- Bước 6 -->
         <section class="step" data-step="6">
-            <form id="checkoutForm">
+            <p class="kicker">06 / Xác nhận</p>
+            <h3>Thiết kế của bạn<br>đã sẵn sàng</h3>
+            <form id="confirmForm">
                 <div style="margin-top: 20px; display: flex; gap: 10px;">
                     <button class="button button-light prev-step" style="flex: 1;" type="button">← Quay lại</button>
                     <button class="button button-dark" type="submit" style="flex: 2;">Chuyển sang trang chốt đơn →</button>
@@ -120,6 +153,7 @@
     </div>
 </main>
 
+<script src="/js/customer/modal.js"></script>
 <script src="/js/customer/design.js"></script>
 </body>
 </html>

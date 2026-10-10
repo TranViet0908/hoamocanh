@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface MaterialRepository extends JpaRepository<Material, Integer> {
 
-    // Tìm hoa còn tồn kho (stock > 0), chưa bị xóa và thuộc danh sách Category được phép
-    @Query("SELECT m FROM Material m WHERE m.category.id IN :categoryIds AND m.stock > 0 AND m.isDeleted = false")
+    // Hoa còn tồn kho, chưa xóa, thuộc Category được phép; sắp theo nhóm rồi tên cho giao diện ổn định
+    @Query("SELECT m FROM Material m WHERE m.category.id IN :categoryIds AND m.stock > 0 AND m.isDeleted = false ORDER BY m.category.id, m.name")
     List<Material> findAvailableMaterialsByCategories(@Param("categoryIds") List<Integer> categoryIds);
 }

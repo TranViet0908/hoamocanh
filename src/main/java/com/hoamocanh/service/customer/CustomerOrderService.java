@@ -1,8 +1,10 @@
 package com.hoamocanh.service.customer;
 
 import com.hoamocanh.core.entity.*;
+import com.hoamocanh.core.util.QRCodeGenerator;
 import com.hoamocanh.dto.customer.CheckoutReq;
 import com.hoamocanh.dto.customer.DesignItemReq;
+import com.hoamocanh.dto.customer.OrderCheckoutRes;
 import com.hoamocanh.repository.MaterialRepository;
 import com.hoamocanh.repository.OrderRepository;
 import com.hoamocanh.repository.ProductTypeRepository;
@@ -11,41 +13,99 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CustomerOrderService {
 
+    private static final Set<String> DELIVERY_TYPES = Set.of("ONLINE", "PICKUP", "DELIVERY");
+    private static final Set<String> PAYMENT_METHODS = Set.of("CASH", "ONLINE");
+    private static final String GIFT_UPLOAD_PREFIX = "/uploads/gift/";
+
     private final OrderRepository orderRepository;
     private final MaterialRepository materialRepository;
     private final ProductTypeRepository productTypeRepository;
     private final CustomerDesignService designService;
-    private final CustomerVoucherService voucherService; // Tích hợp service xử lý khuyến mãi
+    private final CustomerVoucherService voucherService;
+    private final QRCodeGenerator qrCodeGenerator;
+
+    private static boolean blank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
+    // MỚI: kiểm tra dữ liệu đầu vào theo từng hình thức đầu ra
+    private void validateRequest(CheckoutReq req) {
+        if (req.getItems() == null || req.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Giỏ hoa đang trống.");
+        }
+        if (req.getProductTypeId() == null || req.getBudgetLevel() == null) {
+            throw new IllegalArgumentException("Thiếu loại sản phẩm hoặc mức giá.");
+        }
+        if (blank(req.getReceiverName()) || blank(req.getReceiverPhone())) {
+            throw new IllegalArgumentException("Vui lòng nhập họ tên và số điện thoại.");
+        }
+        if (req.getDeliveryType() == null || !DELIVERY_TYPES.contains(req.getDeliveryType())) {
+            throw new IllegalArgumentException("Hình thức đầu ra không hợp lệ.");
+        }
+        if (req.getPaymentMethod() == null || !PAYMENT_METHODS.contains(req.getPaymentMethod())) {
+            throw new IllegalArgumentException("Vui lòng chọn hình thức thanh toán.");
+        }
+        // Ảnh/video quà tặng chỉ được lấy từ thư mục upload của hệ thống (không cho link ngoài)
+        for (String url : new String[]{req.getGiftImageUrl(), req.getGiftVideoUrl()}) {
+            if (!blank(url) && (!url.startsWith(GIFT_UPLOAD_PREFIX) || url.contains(".."))) {
+                throw new IllegalArgumentException("Ảnh/video đính kèm không hợp lệ.");
+            }
+        }
+        if ("DELIVERY".equals(req.getDeliveryType()) && blank(req.getShippingAddress())) {
+            throw new IllegalArgumentException("Vui lòng nhập địa chỉ nhận hàng.");
+        }
+        if (!"ONLINE".equals(req.getDeliveryType())) {
+            if (req.getDeliveryTime() == null) {
+                throw new IllegalArgumentException("Vui lòng chọn thời gian.");
+            }
+            if (req.getDeliveryTime().isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("Thời gian đã chọn nằm trong quá khứ.");
+            }
+        }
+    }
 
     @Transactional
-    public Order processCheckout(CheckoutReq req) {
-        // 1. Chuyển list items thành Map để validate[cite: 18]
+    public OrderCheckoutRes processCheckout(CheckoutReq req) {
+        validateRequest(req);
+
+        // 1. Gộp dòng trùng materialId (toMap cũ sẽ ném lỗi nếu trùng)
         Map<Integer, Integer> itemMap = req.getItems().stream()
-                .collect(Collectors.toMap(DesignItemReq::getMaterialId, DesignItemReq::getQuantity));
+                .filter(i -> i.getQuantity() != null && i.getQuantity() > 0)
+                .collect(Collectors.toMap(DesignItemReq::getMaterialId, DesignItemReq::getQuantity, Integer::sum));
+        if (itemMap.isEmpty()) {
+            throw new IllegalArgumentException("Giỏ hoa đang trống.");
+        }
 
-        // 2. Chặn hack giao diện: Kiểm tra lại toàn bộ định mức ngân sách (400k, 500k...)[cite: 18, 19]
-        designService.validateDesignCart(req.getBudgetLevel(), itemMap);
-
-        // 3. Lấy thông tin Form dáng sản phẩm (Mix thả bình, bó, giỏ...)[cite: 19, 23]
+        // 2. Loại sản phẩm + mức giá tối thiểu
         ProductType productType = productTypeRepository.findById(req.getProductTypeId())
                 .orElseThrow(() -> new IllegalArgumentException("Loại sản phẩm không tồn tại."));
+        if (req.getBudgetLevel().compareTo(productType.getMinBudget()) < 0) {
+            throw new IllegalArgumentException("Ngân sách tối thiểu cho " + productType.getName()
+                    + " là " + productType.getMinBudget());
+        }
 
-        // 4. Khởi tạo Order[cite: 18, 23]
+        // 3. Chặn hack giao diện: định mức, kho, tổng tiền, nguyên liệu đúng loại sản phẩm
+        designService.validateDesignCart(req.getProductTypeId(), req.getBudgetLevel(), itemMap);
+
+        // 4. Khởi tạo Order
         Order order = Order.builder()
-                .receiverName(req.getReceiverName())
-                .receiverPhone(req.getReceiverPhone())
+                .receiverName(req.getReceiverName().trim())
+                .receiverPhone(req.getReceiverPhone().trim())
                 .productType(productType)
                 .totalPrice(req.getBudgetLevel())
-                .deliveryType(req.getDeliveryType()) // ONLINE, PICKUP, DELIVERY[cite: 18, 19]
+                .deliveryType(req.getDeliveryType())
                 .shippingAddress(req.getShippingAddress())
                 .deliveryTime(req.getDeliveryTime())
                 .style(req.getStyle())
@@ -53,15 +113,17 @@ public class CustomerOrderService {
                 .styleNote(req.getStyleNote())
                 .giftMessage(req.getGiftMessage())
                 .giftImageUrl(req.getGiftImageUrl())
+                .giftVideoUrl(req.getGiftVideoUrl())
+                .paymentMethod(req.getPaymentMethod())
                 .status("PENDING")
                 .paymentStatus("UNPAID")
                 .build();
 
-        // 5. Xử lý Voucher (Mã giảm giá) nếu khách có nhập
-        if (req.getVoucherCode() != null && !req.getVoucherCode().isEmpty()) {
-            Voucher validVoucher = voucherService.validateAndGetVoucher(req.getVoucherCode(), req.getBudgetLevel());
+        // 5. Voucher
+        if (!blank(req.getVoucherCode())) {
+            Voucher validVoucher = voucherService.validateAndGetVoucher(req.getVoucherCode().trim(), req.getBudgetLevel());
 
-            BigDecimal discountAmount = BigDecimal.ZERO;
+            BigDecimal discountAmount;
             if ("PERCENT".equals(validVoucher.getDiscountType())) {
                 discountAmount = req.getBudgetLevel().multiply(validVoucher.getDiscountValue()).divide(BigDecimal.valueOf(100));
                 if (validVoucher.getMaxDiscount() != null && discountAmount.compareTo(validVoucher.getMaxDiscount()) > 0) {
@@ -73,41 +135,57 @@ public class CustomerOrderService {
 
             order.setDiscountAmount(discountAmount);
             order.setVoucher(validVoucher);
-
-            // Tăng lượt sử dụng voucher (kích hoạt Optimistic Locking chống lố mã)
             voucherService.incrementVoucherUsage(validVoucher);
         }
 
-        // 6. Xử lý trừ tồn kho nguyên liệu an toàn tuyệt đối[cite: 18]
+        // 6. Trừ tồn kho (@Version trong Material chặn hai khách mua cùng lúc)
         List<OrderDetail> orderDetails = new ArrayList<>();
-        for (DesignItemReq itemReq : req.getItems()) {
-            Material material = materialRepository.findById(itemReq.getMaterialId())
+        for (Map.Entry<Integer, Integer> e : itemMap.entrySet()) {
+            Material material = materialRepository.findById(e.getKey())
                     .orElseThrow(() -> new IllegalArgumentException("Nguyên liệu không tồn tại."));
 
-            if (material.getStock() < itemReq.getQuantity()) {
-                throw new RuntimeException("Rất tiếc, " + material.getName() + " vừa hết hàng do có khách khác đặt. Vui lòng đổi hoa khác!");
+            // IllegalArgumentException để GlobalExceptionHandler trả 400 + message (RuntimeException thường sẽ thành 500)
+            if (material.getStock() < e.getValue()) {
+                throw new IllegalArgumentException("Rất tiếc, " + material.getName()
+                        + " vừa hết hàng do có khách khác đặt. Vui lòng đổi hoa khác!");
             }
 
-            // Trừ tồn kho (Cơ chế @Version trong Material sẽ tự động block nếu có người thứ 2 tranh mua lúc này)[cite: 18, 23]
-            material.setStock(material.getStock() - itemReq.getQuantity());
+            material.setStock(material.getStock() - e.getValue());
             materialRepository.save(material);
 
-            OrderDetail detail = OrderDetail.builder()
+            orderDetails.add(OrderDetail.builder()
                     .order(order)
                     .material(material)
-                    .quantity(itemReq.getQuantity())
+                    .quantity(e.getValue())
                     .unitPrice(material.getPrice())
-                    .build();
-            orderDetails.add(detail);
+                    .build());
         }
-
         order.setOrderDetails(orderDetails);
 
-        // 7. Sinh QR Code chia sẻ nếu khách chọn luồng GỬI TẶNG ONLINE[cite: 18, 19]
+        // 7. Lưu đơn, rồi tạo mã đơn + link quà tặng (cần id nên phải sau khi save)
+        Order saved = orderRepository.save(order);
+        String orderCode = "MA-" + saved.getId();
+
+        String giftUrl = null;
         if ("ONLINE".equals(req.getDeliveryType())) {
-            order.setQrCodeUrl("https://hoamocanh.com/qr/" + System.currentTimeMillis());
+            // Token ngẫu nhiên: người lạ không đoán được link quà của khách khác
+            String token = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+            giftUrl = qrCodeGenerator.generateGiftQRCode(token);
+            saved.setQrCodeUrl(giftUrl);   // entity đang được quản lý trong transaction nên tự lưu khi commit
         }
 
-        return orderRepository.save(order);
+        BigDecimal discount = saved.getDiscountAmount() == null ? BigDecimal.ZERO : saved.getDiscountAmount();
+        BigDecimal payable = saved.getTotalPrice().subtract(discount).max(BigDecimal.ZERO);
+
+        return OrderCheckoutRes.builder()
+                .orderId(saved.getId())
+                .orderCode(orderCode)
+                .orderStatus(saved.getStatus())
+                .paymentStatus(saved.getPaymentStatus())
+                .paymentMethod(saved.getPaymentMethod())
+                .payableAmount(payable)
+                .qrCodeUrl(giftUrl)
+                .message("Đơn hàng đã được ghi nhận.")
+                .build();
     }
 }

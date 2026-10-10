@@ -39,6 +39,10 @@ public class Order {
     @Column(name = "payment_status", length = 20)
     private String paymentStatus; // UNPAID, DEPOSITED, PAID
 
+    // MỚI: hình thức thanh toán khách chọn: CASH (trực tiếp) | ONLINE
+    @Column(name = "payment_method", length = 20)
+    private String paymentMethod;
+
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 

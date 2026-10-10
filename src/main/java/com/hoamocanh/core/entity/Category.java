@@ -21,6 +21,11 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    // MỚI: nhóm định mức của danh mục (MAIN, SUB, LEAF, PACKAGING, ACCESSORY, OTHER)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "design_group", length = 20)
+    private DesignGroup designGroup;
+
     @Column(name = "is_deleted", columnDefinition = "tinyint(1) default 0")
     private Boolean isDeleted;
 }

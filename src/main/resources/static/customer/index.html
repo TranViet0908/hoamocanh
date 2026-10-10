@@ -25,6 +25,22 @@
       <img src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=85" alt="Bó hoa tươi tone hồng kem">
     </div>
   </section>
+  <section id="types" style="padding:32px 20px;max-width:960px;margin:auto" hidden>
+    <p class="eyebrow">Bạn có thể thiết kế</p>
+    <div id="typeList" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px"></div>
+  </section>
 </main>
+<script>
+  fetch('/customer/products/types')
+    .then(r => r.ok ? r.json() : [])
+    .then(list => {
+      if (!list.length) return;
+      const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      document.getElementById('typeList').innerHTML = list
+        .map(t => `<a class="button button-light" href="/customer/design.html">${esc(t.name ?? t.typeName)}</a>`).join('');
+      document.getElementById('types').hidden = false;
+    })
+    .catch(() => {});
+</script>
 </body>
 </html>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Chốt đơn — Mộc Anh</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/design.css">
 </head>
 <body>
 <header class="site-header">
@@ -12,33 +13,58 @@
         <span class="brand-mark">MA</span>
         <span><b>MỘC ANH</b><small>flower studio</small></span>
     </a>
-    <a href="/customer/index.html">Trang chủ</a>
+    <a href="/customer/design.html">← Sửa thiết kế</a>
 </header>
 
 <main class="flow">
     <div class="flow-shell">
         <p class="eyebrow">Hoàn tất yêu cầu</p>
-        <h2>Chốt đơn &amp; thanh toán</h2>
-        <p style="color:var(--muted);line-height:1.6;margin:14px 0 24px">
-            Chọn một hình thức thanh toán phù hợp. Nhân viên sẽ xác nhận lại trước khi xử lý.
-        </p>
+        <h2>Chốt đơn</h2>
 
-        <div class="output-tabs">
-            <button type="button" class="selected">Chuyển khoản QR</button>
-            <button type="button">Thanh toán tại tiệm</button>
-            <button type="button">Thanh toán khi nhận</button>
+        <div id="orderSummary" class="mt-summary"></div>
+
+        <p class="mt-sub">Hình thức</p>
+        <div class="output-tabs" id="outputTabs">
+            <button type="button" class="selected" data-output="ONLINE">Gửi tặng online</button>
+            <button type="button" data-output="PICKUP">Tự làm tại tiệm</button>
+            <button type="button" data-output="DELIVERY">Mộc Anh làm giúp</button>
         </div>
+        <p class="mt-hint" id="outputHint"></p>
 
-        <form id="checkoutForm">
-            <label>Họ và tên<input name="name" required></label>
-            <label>Số điện thoại<input name="phone" type="tel" required></label>
-            <label>Địa chỉ nhận hàng<textarea name="address" rows="3" required></textarea></label>
-            <label>Ghi chú<textarea name="note" rows="3"></textarea></label>
+        <form id="checkoutForm" novalidate>
+            <label>Họ và tên<input name="name" required autocomplete="name"></label>
+            <label>Số điện thoại<input name="phone" type="tel" required autocomplete="tel"></label>
+            <label id="fieldTime" hidden><span id="timeLabel">Thời gian</span><input name="time" type="datetime-local"></label>
+            <label id="fieldAddress" hidden>Địa chỉ nhận hàng<textarea name="address" rows="3"></textarea></label>
+
+            <div id="fieldGift">
+                <label>Lời chúc gửi người nhận<textarea name="gift" rows="3"></textarea></label>
+                <label style="margin-top:14px">Ảnh kèm theo <small>(không bắt buộc · jpg, png, webp · tối đa 8MB)</small>
+                    <input type="file" id="giftImage" accept="image/jpeg,image/png,image/webp"></label>
+                <small id="giftImageStatus" class="mt-upload"></small>
+                <label style="margin-top:14px">Video kèm theo <small>(không bắt buộc · mp4, webm · tối đa 40MB)</small>
+                    <input type="file" id="giftVideo" accept="video/mp4,video/webm"></label>
+                <small id="giftVideoStatus" class="mt-upload"></small>
+            </div>
+
+            <label>Ghi chú cho tiệm<textarea name="note" rows="2"></textarea></label>
+            <label>Mã giảm giá (nếu có)<input name="voucher" autocomplete="off"></label>
+
+            <div>
+                <p class="mt-sub" style="margin-top:6px">Thanh toán</p>
+                <div class="material-tabs" id="payTabs" style="margin-bottom:8px">
+                    <button type="button" class="selected" data-pay="CASH">Thanh toán trực tiếp</button>
+                    <button type="button" data-pay="ONLINE">Thanh toán online</button>
+                </div>
+                <p class="mt-hint" id="payHint" style="margin:0"></p>
+            </div>
+
             <button class="button button-dark" type="submit">Xác nhận đặt hàng →</button>
         </form>
     </div>
 </main>
 
+<script src="/js/customer/modal.js"></script>
 <script src="/js/customer/checkout.js"></script>
 </body>
 </html>

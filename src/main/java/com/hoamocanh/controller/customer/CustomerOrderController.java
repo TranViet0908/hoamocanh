@@ -1,7 +1,7 @@
 package com.hoamocanh.controller.customer;
 
-import com.hoamocanh.core.entity.Order;
 import com.hoamocanh.dto.customer.CheckoutReq;
+import com.hoamocanh.dto.customer.OrderCheckoutRes;
 import com.hoamocanh.service.customer.CustomerOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +14,9 @@ public class CustomerOrderController {
 
     private final CustomerOrderService orderService;
 
+    // Trả DTO thay vì entity Order (tránh lỗi lazy/vòng lặp Order <-> OrderDetail khi serialize)
     @PostMapping("/checkout")
-    public ResponseEntity<Order> checkout(@RequestBody CheckoutReq checkoutReq) {
-        Order savedOrder = orderService.processCheckout(checkoutReq);
-        return ResponseEntity.ok(savedOrder);
+    public ResponseEntity<OrderCheckoutRes> checkout(@RequestBody CheckoutReq checkoutReq) {
+        return ResponseEntity.ok(orderService.processCheckout(checkoutReq));
     }
 }
