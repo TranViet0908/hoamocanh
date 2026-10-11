@@ -39,6 +39,16 @@ public class Material {
     @Column(nullable = false)
     private Integer stock;
 
+    // MỚI (trang quản trị): màu sắc, đơn vị tính (cành, bó, cuộn...), ngưỡng cảnh báo sắp hết
+    @Column(length = 50)
+    private String color;
+
+    @Column(length = 20)
+    private String unit;
+
+    @Column(name = "low_stock_threshold")
+    private Integer lowStockThreshold;
+
     // Cơ chế chống Race Condition khi nhiều khách cùng mua
     @Version
     @Column(columnDefinition = "int default 1")

@@ -1,1 +1,80 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tổng quan — Mộc Anh</title><link rel="stylesheet" href="/css/styles.css"></head><body><div class="admin-layout"><aside class="sidebar"><a class="brand" href="dashboard.html"><span class="brand-mark">MA</span><span><b>MỘC ANH</b><small>flower studio</small></span></a><a class="side-link active" href="dashboard.html">Tổng quan</a><a class="side-link" href="inventory.html">Kho hoa</a><a class="side-link" href="orders.html">Đơn hàng</a><a class="side-link" href="../customer/index.html">← Về trang khách</a></aside><main class="admin-main"><div class="admin-top"><div><p class="eyebrow">Xin chào, An</p><h1>Quản trị hôm nay</h1></div><a class="button button-dark" href="inventory.html">+ Cập nhật kho</a></div><div class="product-grid"><div class="admin-card"><p class="eyebrow">Đơn mới</p><h2>12</h2><small>+3 so với hôm qua</small></div><div class="admin-card"><p class="eyebrow">Doanh thu dự kiến</p><h2>8,4 triệu</h2><small>Trong ngày hôm nay</small></div><div class="admin-card"><p class="eyebrow">Nguyên liệu sắp hết</p><h2>04</h2><small>Cần cập nhật</small></div></div><section class="admin-card"><h2>Việc cần xử lý</h2><p>3 đơn hàng đang chờ xác nhận và 4 nguyên liệu có tồn kho dưới định mức.</p><a href="orders.html">Xem đơn hàng →</a></section></main></div></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tổng quan — Mộc Anh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .db-stat{text-decoration:none;color:inherit;display:block}
+    .db-stat b{display:block;font:500 34px 'Playfair Display',serif;margin:4px 0}
+    .db-stat small{color:var(--muted)}.db-stat small.up{color:var(--ok)}.db-stat small.down{color:var(--bad)}
+    .db-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+    .db-cols h2{font-size:22px;margin-bottom:12px}
+    .db-todo a,.db-line{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #efece5;text-decoration:none;color:inherit}
+    .db-todo a:last-child,.db-line:last-child{border-bottom:0}
+    .db-todo a:hover b{color:var(--accent)}
+    .db-n{min-width:34px;text-align:center;border-radius:99px;padding:2px 10px;background:#eceae3;font-weight:600}
+    .db-n.hot{background:var(--accent);color:#fff}
+    .db-empty{color:var(--muted);padding:14px 0}
+    .db-time{font:600 15px 'Be Vietnam Pro',sans-serif;min-width:48px}
+    @media(max-width:760px){.db-cols{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <script src="/js/admin/admin-core.js"></script>
+  <script>
+    (async function () {
+      const { api, esc, money } = Admin;
+      const TYPE = { PICKUP: 'Tự làm tại tiệm', DELIVERY: 'Mộc Anh làm giúp' };
+      const ST = { PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', PREPARING: 'Đang chuẩn bị', IN_PROGRESS: 'Đang thực hiện',
+                   AWAITING_APPROVAL: 'Chờ khách duyệt', READY: 'Sẵn sàng giao/nhận' };
+      const hhmm = s => { const d = new Date(String(s).replace(' ', 'T')); return isNaN(d) ? '—' : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }); };
+
+      const { page } = await Admin.mount({ active: 'dashboard.html', title: 'Tổng quan' });
+      page.innerHTML = '<div class="adm-card adm-muted">Đang tải số liệu...</div>';
+
+      async function load() {
+        const d = await api('/dashboard');
+        const diff = d.ordersToday - d.ordersYesterday;
+        const diffTxt = diff === 0 ? 'Bằng hôm qua' : (diff > 0 ? '+' : '−') + Math.abs(diff) + ' so với hôm qua';
+        const warn = d.lowStock + d.outOfStock;
+        const todo = [
+          ['Đơn chờ xác nhận', d.pending, 'orders.html?view=PENDING', true],
+          ['Đơn chờ khách duyệt ảnh', d.awaitingApproval, 'orders.html', true],
+          ['Đơn sẵn sàng giao/nhận', d.ready, 'orders.html', false],
+          ['Đơn chưa thu đủ tiền', d.unpaid, 'orders.html', false],
+          ['Nguyên liệu hết hoặc sắp hết', warn, 'inventory.html', true]
+        ];
+        page.innerHTML = `
+          <div class="adm-grid">
+            <a class="adm-card db-stat" href="orders.html"><p class="adm-eyebrow">Đơn mới hôm nay</p><b>${d.ordersToday}</b>
+              <small class="${diff > 0 ? 'up' : diff < 0 ? 'down' : ''}">${diffTxt}</small></a>
+            <div class="adm-card db-stat"><p class="adm-eyebrow">Doanh thu dự kiến</p><b>${money(d.revenueToday)}</b><small>Đơn đặt trong ngày (không tính đơn hủy)</small></div>
+            <a class="adm-card db-stat" href="orders.html?view=PENDING"><p class="adm-eyebrow">Chờ xác nhận</p><b>${d.pending}</b><small>${d.pending ? 'Cần xử lý ngay' : 'Không có đơn tồn'}</small></a>
+            <a class="adm-card db-stat" href="inventory.html"><p class="adm-eyebrow">Nguyên liệu cần nhập</p><b>${warn}</b><small>${d.outOfStock} hết hàng · ${d.lowStock} sắp hết</small></a>
+          </div>
+          <div class="db-cols">
+            <section class="adm-card"><h2>Việc cần xử lý</h2><div class="db-todo">${todo.map(([t, n, href, hot]) =>
+              `<a href="${href}"><b style="font-weight:500">${t}</b><span class="db-n ${n && hot ? 'hot' : ''}">${n}</span></a>`).join('')}</div></section>
+            <section class="adm-card"><h2>Lịch hôm nay</h2>${d.today.length ? d.today.map(t =>
+              `<a class="db-line" href="orders.html"><span class="db-time">${hhmm(t.time)}</span>
+                <span style="flex:1"><b>${esc(t.customerName)}</b> · ${esc(t.code)}<br><small class="adm-muted">${TYPE[t.deliveryType] || ''}</small></span>
+                <span class="adm-badge info">${ST[t.status] || esc(t.status)}</span></a>`).join('')
+              : '<p class="db-empty">Hôm nay chưa có khách hẹn đến hoặc cần giao.</p>'}</section>
+          </div>
+          <section class="adm-card" style="margin-top:14px"><h2 style="font-size:22px;margin-bottom:12px">Cần nhập thêm</h2>${d.lowItems.length ? d.lowItems.map(m =>
+            `<a class="db-line" href="inventory.html"><b style="font-weight:500">${esc(m.name)}</b>
+              <span class="adm-badge ${m.stock <= 0 ? 'bad' : 'warn'}">${m.stock <= 0 ? 'Hết hàng' : 'Còn ' + m.stock + (m.unit ? ' ' + esc(m.unit) : '')}</span></a>`).join('')
+            : '<p class="db-empty">Kho đang đủ hàng.</p>'}</section>`;
+      }
+
+      try { await load(); } catch (e) { page.innerHTML = `<div class="adm-card adm-muted">${esc(e.message)}</div>`; }
+      setInterval(() => load().catch(() => { }), 60000);   // tự làm mới mỗi phút
+    })();
+  </script>
+</body>
+</html>

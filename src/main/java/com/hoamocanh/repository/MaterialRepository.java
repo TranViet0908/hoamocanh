@@ -13,4 +13,8 @@ public interface MaterialRepository extends JpaRepository<Material, Integer> {
     // Hoa còn tồn kho, chưa xóa, thuộc Category được phép; sắp theo nhóm rồi tên cho giao diện ổn định
     @Query("SELECT m FROM Material m WHERE m.category.id IN :categoryIds AND m.stock > 0 AND m.isDeleted = false ORDER BY m.category.id, m.name")
     List<Material> findAvailableMaterialsByCategories(@Param("categoryIds") List<Integer> categoryIds);
+
+    // MỚI (admin): toàn bộ nguyên liệu kể cả đang ẩn, nạp sẵn category để không bị N+1
+    @Query("SELECT m FROM Material m JOIN FETCH m.category ORDER BY m.category.id, m.name")
+    List<Material> findAllWithCategory();
 }

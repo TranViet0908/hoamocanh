@@ -1,1 +1,45 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kho hoa — Mộc Anh</title><link rel="stylesheet" href="/css/styles.css"></head><body><div class="admin-layout"><aside class="sidebar"><a class="brand" href="dashboard.html"><span class="brand-mark">MA</span><span><b>MỘC ANH</b><small>flower studio</small></span></a><a class="side-link" href="dashboard.html">Tổng quan</a><a class="side-link active" href="inventory.html">Kho hoa</a><a class="side-link" href="orders.html">Đơn hàng</a></aside><main class="admin-main"><div class="admin-top"><div><p class="eyebrow">Cập nhật hàng ngày</p><h1>Kho nguyên liệu</h1></div><button class="button button-dark" onclick="alert('Mở biểu mẫu thêm nguyên liệu')">+ Thêm nguyên liệu</button></div><section class="admin-card"><table class="admin-table"><thead><tr><th>NGUYÊN LIỆU</th><th>LOẠI</th><th>GIÁ</th><th>TỒN KHO</th><th>TRẠNG THÁI</th></tr></thead><tbody id="inventoryBody"></tbody></table></section></main></div><script src="/js/admin/inventory.js"></script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kho nguyên liệu — Mộc Anh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .inv-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+    .inv-sum div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+    .inv-sum b{display:block;font:500 28px 'Playfair Display',serif}.inv-sum span{font-size:12px;color:var(--muted)}
+    .inv-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+    .inv-bar .adm-input{flex:1;min-width:200px}.inv-bar select.adm-input{flex:none;width:auto;min-width:150px}
+    .inv-cats{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
+    .inv-cats button{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:99px;padding:8px 16px;cursor:pointer}
+    .inv-cats button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+    .inv-row{display:grid;grid-template-columns:56px 1fr auto 92px auto;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:8px}
+    .inv-row.dim{opacity:.55}
+    .inv-img{width:56px;height:56px;object-fit:cover;border-radius:8px;background:var(--cream)}
+    .inv-info b{display:block}.inv-info small{color:var(--muted)}
+    .inv-stock{display:flex;align-items:center;gap:6px}
+    .inv-stock button{width:38px;height:38px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-size:18px}
+    .inv-stock input{width:66px;height:38px;text-align:center;border:1px solid var(--line);border-radius:8px}
+    .inv-act{display:flex;gap:6px}
+    .inv-act button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px}
+    .inv-act button:hover{border-color:var(--accent)}
+    .inv-empty{text-align:center;padding:40px 10px;color:var(--muted)}
+    .inv-pic{display:flex;gap:14px;align-items:center}.inv-pic img{width:84px;height:84px;object-fit:cover;border-radius:10px;background:var(--cream)}
+    .adm-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:760px){
+      .inv-sum{grid-template-columns:repeat(2,1fr)}
+      .inv-row{grid-template-columns:56px 1fr}
+      .inv-stock,.inv-badge,.inv-act{grid-column:1 / -1}.inv-act button{flex:1;min-height:40px}
+      .inv-stock{justify-content:space-between}.inv-stock input{flex:1}
+    }
+  </style>
+</head>
+<body>
+  <script src="/js/admin/admin-core.js"></script>
+  <script src="/js/admin/inventory.js"></script>
+</body>
+</html>

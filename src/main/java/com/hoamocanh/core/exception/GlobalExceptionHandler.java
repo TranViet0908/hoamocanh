@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -64,5 +66,20 @@ public class GlobalExceptionHandler {
         response.put("error", "Invalid Budget");
         response.put("message", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    // Sai số điện thoại / mật khẩu khi đăng nhập quản trị
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, String>> handleAuth(AuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Unauthorized", "message", "Số điện thoại hoặc mật khẩu không đúng."));
+    }
+
+    // Lỗi @Valid: trả câu báo lỗi đầu tiên
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
+        String msg = ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> e.getDefaultMessage()).findFirst().orElse("Dữ liệu không hợp lệ.");
+        return ResponseEntity.badRequest().body(Map.of("error", "Bad Request", "message", msg));
     }
 }

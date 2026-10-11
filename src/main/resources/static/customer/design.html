@@ -4,58 +4,76 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Thiết kế hoa — Mộc Anh</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/design.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/moc-anh.css">
 </head>
-<body>
+<body class="page-design">
+<a class="skip-link" href="#main-content">Bỏ qua đến nội dung</a>
 <header class="site-header">
     <a class="brand" href="/customer/index.html">
         <span class="brand-mark">MA</span>
         <span><b>MỘC ANH</b><small>flower studio</small></span>
     </a>
-    <a href="/customer/index.html">Trang chủ</a>
+    <a class="nav-link" href="/customer/index.html">Trang chủ</a>
 </header>
 
-<main class="flow">
+<main id="main-content" class="flow">
     <div class="flow-shell">
         <div class="flow-head">
             <div>
                 <p class="eyebrow">Bộ sưu tập của bạn</p>
-                <h2>Thiết kế từng bước</h2>
+                <h2>Thiết kế <i>từng bước</i></h2>
             </div>
             <span class="step-label">BƯỚC <b id="stepNumber">01</b> / 06</span>
         </div>
         <div class="progress">
             <span id="progressBar" style="width:16%"></span>
         </div>
+        <ol class="stepper" id="stepper" aria-label="Tiến trình thiết kế">
+            <li class="is-active"><span>Kiểu dáng</span></li>
+            <li><span>Ngân sách</span></li>
+            <li><span>Phong cách</span></li>
+            <li><span>Nguyên liệu</span></li>
+            <li><span>Hình dung</span></li>
+            <li><span>Xác nhận</span></li>
+        </ol>
 
         <!-- Bước 1 -->
         <section class="step active" data-step="1">
             <p class="kicker">01 / Kiểu dáng</p>
-            <h3>Bạn muốn tạo nên<br>điều gì hôm nay?</h3>
+            <div class="step-banner" data-caption="Mỗi bó hoa bắt đầu từ một ý tưởng"><img src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=85" alt="" style="object-position:50% 40%" loading="lazy"></div>
+
+            <h3>Bạn muốn tạo nên<br><i>điều gì</i> hôm nay?</h3>
             <div class="product-grid" id="productGrid"><p style="color:var(--muted)">Đang tải...</p></div>
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button type="button" class="button button-dark next-step" style="width: 100%;">Tiếp tục →</button>
+            <div class="step-actions">
+                <button type="button" class="button button-dark next-step">Tiếp tục →</button>
             </div>
         </section>
 
         <!-- Bước 2 -->
         <section class="step" data-step="2">
             <p class="kicker">02 / Ngân sách</p>
-            <h3>Khoảng ngân sách<br>bạn đang nghĩ đến?</h3>
+            <div class="step-banner" data-caption="Đẹp theo cách của bạn"><img src="https://images.unsplash.com/photo-1527061011665-3652c757a4d4?auto=format&fit=crop&w=1000&q=85" alt="" style="object-position:50% 60%" loading="lazy"></div>
+
+            <h3>Khoảng ngân sách<br>bạn đang <i>nghĩ đến?</i></h3>
             <label class="range-value" id="budgetText">700.000đ</label>
-            <input id="budget" class="range" type="range" min="400000" max="1500000" step="100000" value="700000">
+            <input id="budget" class="range" type="range" min="400000" max="1500000" step="100000" value="700000" aria-labelledby="budgetText">
             <div class="range-labels"><span>400.000đ</span><span>1.500.000đ+</span></div>
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button type="button" class="button button-light prev-step" style="flex: 1;">← Quay lại</button>
-                <button type="button" class="button button-dark next-step" style="flex: 2;">Chọn phong cách →</button>
+            <p class="mt-hint">Mỗi mức giá cách nhau 100.000đ. Mức giá quyết định số lượng hoa, lá và phụ kiện bạn được chọn ở bước sau.</p>
+            <div class="step-actions">
+                <button type="button" class="button button-light prev-step">← Quay lại</button>
+                <button type="button" class="button button-dark next-step">Chọn phong cách →</button>
             </div>
         </section>
 
         <!-- Bước 3 -->
         <section class="step" data-step="3">
             <p class="kicker">03 / Cảm hứng</p>
-            <h3>Gu của bạn hôm nay<br>mang màu sắc nào?</h3>
+            <div class="step-banner" data-caption="Chọn gu, chọn cảm xúc"><img src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=85" alt="" style="object-position:50% 75%" loading="lazy"></div>
+
+            <h3>Gu của bạn hôm nay<br>mang <i>màu sắc</i> nào?</h3>
 
             <p class="mt-sub">Phong cách</p>
             <div class="choice-grid" data-choice="style">
@@ -89,16 +107,17 @@
                 <button type="button" class="choice">Tặng bản thân</button>
             </div>
 
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button type="button" class="button button-light prev-step" style="flex: 1;">← Quay lại</button>
-                <button type="button" class="button button-dark next-step" style="flex: 2;">Chọn nguyên liệu →</button>
+            <div class="step-actions">
+                <button type="button" class="button button-light prev-step">← Quay lại</button>
+                <button type="button" class="button button-dark next-step">Chọn nguyên liệu →</button>
             </div>
         </section>
 
         <!-- Bước 4 -->
         <section class="step" data-step="4">
             <p class="kicker">04 / Nguyên liệu</p>
-            <h3>Chọn những điều<br>bạn yêu thích</h3>
+            <h3>Chọn những điều<br>bạn <i>yêu thích</i></h3>
+            <p class="mt-hint">Chỉ hiển thị nguyên liệu đang có, phù hợp với loại sản phẩm và mức giá bạn chọn. Các nhãn bên dưới cho biết bạn còn được chọn bao nhiêu mỗi nhóm.</p>
             <div class="material-tabs">
                 <button type="button" class="selected" data-filter="all">Tất cả</button>
                 <button type="button" data-filter="flower">Hoa &amp; lá</button>
@@ -108,45 +127,51 @@
             <div class="mt-limits" id="limitBar"></div>
             <div class="mt-list" id="materials"></div>
             <div class="cart-sticky">
-                <div>
-                    <span id="cartCount">0</span> nguyên liệu
-                    <strong id="cartTotal">0đ</strong>
-                    <small id="budgetMessage"></small>
-                    <button type="button" id="raiseBudget" class="mt-raise" hidden></button>
+                <div class="cart-info">
+                    <div class="cart-line">
+                        <span class="cart-count" id="cartCount">0</span>
+                        <span class="cart-unit">nguyên liệu</span>
+                        <strong id="cartTotal">0đ</strong>
+                    </div>
+                    <div class="cart-sub">
+                        <small id="budgetMessage"></small>
+                        <button type="button" id="raiseBudget" class="mt-raise" hidden></button>
+                    </div>
                     <div class="mt-thumbs" id="cartThumbs"></div>
                 </div>
                 <button type="button" id="validate" class="button button-light">Kiểm tra ngân sách</button>
             </div>
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button type="button" class="button button-light prev-step" style="flex: 1;">← Quay lại</button>
-                <button type="button" class="button button-dark next-step" style="flex: 2;">Xem hình dung →</button>
+            <div class="step-actions">
+                <button type="button" class="button button-light prev-step">← Quay lại</button>
+                <button type="button" class="button button-dark next-step">Xem hình dung →</button>
             </div>
         </section>
 
         <!-- Bước 5 -->
         <section class="step" data-step="5">
             <p class="kicker">05 / Hình dung</p>
-            <h3>Những gì bạn chọn,<br>khi đặt cạnh nhau</h3>
+            <h3>Những gì bạn chọn,<br>khi <i>đặt cạnh nhau</i></h3>
             <div class="moodboard">
                 <div class="mt-collage" id="collage" hidden></div>
                 <img id="moodFallback" src="https://images.unsplash.com/photo-1527061011665-3652c757a4d4?auto=format&fit=crop&w=1000&q=85" alt="Moodboard hoa tươi">
                 <div class="mood-note"><span id="moodItems"></span><br>Hình ảnh mô phỏng. Sản phẩm thực tế thay đổi theo nguồn hoa tươi trong ngày.</div>
             </div>
             <div id="designSummary"></div>
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
-                <button type="button" class="button button-light prev-step" style="flex: 1;">← Quay lại</button>
-                <button type="button" class="button button-dark next-step" style="flex: 2;">Chốt đơn →</button>
+            <div class="step-actions">
+                <button type="button" class="button button-light prev-step">← Quay lại</button>
+                <button type="button" class="button button-dark next-step">Chốt đơn →</button>
             </div>
         </section>
 
         <!-- Bước 6 -->
         <section class="step" data-step="6">
             <p class="kicker">06 / Xác nhận</p>
-            <h3>Thiết kế của bạn<br>đã sẵn sàng</h3>
+            <h3>Thiết kế của bạn<br>đã <i>sẵn sàng</i></h3>
+            <p class="mt-hint">Ở trang tiếp theo, bạn chọn một trong ba cách nhận hoa: gửi tặng online, tự tay làm tại tiệm hoặc để Mộc Anh làm giúp.</p>
             <form id="confirmForm">
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button class="button button-light prev-step" style="flex: 1;" type="button">← Quay lại</button>
-                    <button class="button button-dark" type="submit" style="flex: 2;">Chuyển sang trang chốt đơn →</button>
+                <div class="step-actions" style="margin-top:6px">
+                    <button class="button button-light prev-step" type="button">← Quay lại</button>
+                    <button class="button button-dark" type="submit">Chuyển sang trang chốt đơn →</button>
                 </div>
             </form>
         </section>
@@ -155,5 +180,44 @@
 
 <script src="/js/customer/modal.js"></script>
 <script src="/js/customer/design.js"></script>
+<!-- Chỉ phục vụ giao diện (không đụng tới logic): tô sáng thanh tiến trình & gắn icon cho loại sản phẩm -->
+<script>
+    (function () {
+        var items = document.querySelectorAll('#stepper li');
+        function syncStepper() {
+            var act = document.querySelector('.step.active');
+            var n = act ? +act.getAttribute('data-step') : 1;
+            items.forEach(function (li, i) {
+                li.classList.toggle('is-active', i + 1 === n);
+                li.classList.toggle('is-done', i + 1 < n);
+            });
+        }
+        document.querySelectorAll('.step').forEach(function (s) {
+            new MutationObserver(syncStepper).observe(s, { attributes: true, attributeFilter: ['class'] });
+        });
+        syncStepper();
+
+        function kindOf(name) {
+            var t = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd').toLowerCase();
+            if (/binh/.test(t)) return 'vase';
+            if (/\bgio\b/.test(t)) return 'basket';
+            if (/\b(box|hop)\b/.test(t)) return 'box';
+            if (/\btui\b/.test(t)) return 'bag';
+            if (/\bke\b/.test(t)) return 'stand';
+            if (/\bbo\b/.test(t)) return 'bouquet';
+            return '';
+        }
+        var grid = document.getElementById('productGrid');
+        function tag() {
+            grid.querySelectorAll('.product-card').forEach(function (c) {
+                var s = c.querySelector('strong');
+                var k = s ? kindOf(s.textContent) : '';
+                if (k) c.setAttribute('data-kind', k);
+            });
+        }
+        new MutationObserver(tag).observe(grid, { childList: true });
+        tag();
+    })();
+</script>
 </body>
 </html>

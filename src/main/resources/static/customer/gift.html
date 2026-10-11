@@ -4,10 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Một món quà dành cho bạn — Mộc Anh</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/design.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/moc-anh.css">
 </head>
-<body>
+<body class="page-gift">
+<a class="skip-link" href="#gift">Bỏ qua đến nội dung</a>
+<div class="petals" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <main class="gift-page">
     <a class="brand" href="/customer/index.html">
         <span class="brand-mark">MA</span>
@@ -17,9 +21,9 @@
     <div id="loading" class="gift-error">Đang mở món quà...</div>
     <div id="error" class="gift-error" hidden></div>
 
-    <section id="gift" hidden>
+    <section id="gift" hidden tabindex="-1">
         <p class="eyebrow">Một món quà dành cho bạn</p>
-        <h1 class="gift-title" id="giftTitle">Gửi bạn đóa hoa này</h1>
+        <h1 class="gift-title" id="giftTitle">Gửi bạn <i>đóa hoa</i> này</h1>
         <p class="gift-from" id="giftFrom"></p>
 
         <p class="gift-message" id="giftMessage"></p>
@@ -32,7 +36,7 @@
         </div>
 
         <p class="gift-note">Hình ảnh mang tính mô phỏng. Sản phẩm thực tế có thể thay đổi theo nguồn hoa tươi trong ngày.</p>
-        <p style="margin-top:26px"><a class="button button-dark" href="/customer/index.html">Tự thiết kế hoa của bạn →</a></p>
+        <p style="margin-top:28px"><a class="button button-dark" href="/customer/index.html">Tự thiết kế hoa của bạn →</a></p>
     </section>
 
     <div class="mt-actions" id="contact" hidden style="margin-top:24px"></div>

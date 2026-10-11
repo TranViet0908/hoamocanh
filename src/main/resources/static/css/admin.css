@@ -1,0 +1,82 @@
+/* Mộc Anh — giao diện quản trị. Độc lập với styles.css / moc-anh.css (mọi class đều bắt đầu bằng adm-). */
+:root{--ink:#17242b;--muted:#65747a;--cream:#f1ede4;--paper:#fbfaf7;--line:#e2dfd6;--accent:#c9794e;--ok:#3f8a5f;--warn:#b7791f;--bad:#b4473f;--info:#3b6ea5;--r:12px;--shadow:0 10px 30px rgba(23,36,43,.08)}
+*{box-sizing:border-box}
+body.adm{margin:0;background:#f6f4ee;color:var(--ink);font:14px/1.5 'Be Vietnam Pro',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.adm h1,.adm h2,.adm h3{font-family:'Playfair Display',Georgia,serif;font-weight:500;margin:0}
+.adm button,.adm input,.adm select,.adm textarea{font:inherit;color:inherit}
+.adm :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Khung: sidebar (desktop) + tabbar (điện thoại) */
+.adm-shell{display:flex;min-height:100vh}
+.adm-side{width:248px;flex:none;background:var(--ink);color:#fff;padding:26px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.adm-brand{display:flex;gap:10px;align-items:center;text-decoration:none;color:#fff;margin:0 8px 34px}
+.adm-mark{width:34px;height:34px;border:1px solid #dfe8e5;border-radius:50%;display:grid;place-items:center;font:600 12px 'Playfair Display',serif}
+.adm-brand b{display:block;letter-spacing:2px;font-size:11px}.adm-brand small{color:#9fb1b0;font-size:10px}
+.adm-nav a{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:10px;color:#b9c7c6;text-decoration:none;margin-bottom:4px}
+.adm-nav a:hover{background:#ffffff12;color:#fff}.adm-nav a.on{background:var(--accent);color:#fff}
+.adm-nav i{font-style:normal;width:18px;text-align:center}
+.adm-user{margin-top:auto;padding:14px 8px 0;border-top:1px solid #ffffff1f;font-size:12px;color:#b9c7c6}
+.adm-user b{display:block;color:#fff;font-size:13px}
+.adm-user button{margin-top:10px;background:none;border:1px solid #ffffff33;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
+.adm-main{flex:1;min-width:0;padding:34px clamp(18px,4vw,48px) 60px}
+.adm-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+.adm-eyebrow{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);font-weight:600;margin:0 0 8px}
+.adm-top h1{font-size:clamp(30px,4vw,42px);letter-spacing:-.02em}
+.adm-top-actions{display:flex;gap:10px;align-items:center}
+.adm-logout-m{display:none}
+.adm-tabbar{display:none}
+
+/* Thành phần dùng chung */
+.adm-card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);overflow:auto}
+.adm-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.adm-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;text-decoration:none;font-weight:500;transition:.15s}
+.adm-btn:hover{border-color:var(--accent)}
+.adm-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.adm-btn.primary:hover{background:#b56a43}
+.adm-btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.adm-btn:disabled{opacity:.55;cursor:not-allowed}
+.adm-field{display:grid;gap:6px;margin-bottom:14px;font-size:12px;color:var(--muted)}
+.adm-input{width:100%;min-height:46px;padding:10px 14px;border:1px solid #cfd4cf;border-radius:10px;background:#fff;color:var(--ink)}
+.adm-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #c9794e22;outline:0}
+.adm-badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;background:#eceae3;color:var(--muted)}
+.adm-badge.ok{background:#e1f1e8;color:var(--ok)}.adm-badge.warn{background:#faefd7;color:var(--warn)}
+.adm-badge.bad{background:#f7e0dd;color:var(--bad)}.adm-badge.info{background:#e0ebf7;color:var(--info)}
+.adm-muted{color:var(--muted)}.adm-error{color:var(--bad);font-size:13px;min-height:20px;margin:0 0 10px}
+
+/* Bảng (điện thoại tự chuyển thành thẻ; mỗi <td> cần data-label) */
+.adm-table{width:100%;border-collapse:collapse}
+.adm-table th{text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line)}
+.adm-table td{padding:13px 12px;border-bottom:1px solid #efece5;vertical-align:middle}
+.adm-table tr:last-child td{border-bottom:0}
+
+/* Ngăn trượt chi tiết (dùng ở trang Kho, Đơn hàng) */
+.adm-overlay{position:fixed;inset:0;background:rgba(23,36,43,.45);opacity:0;pointer-events:none;transition:.2s;z-index:40}
+.adm-overlay.show{opacity:1;pointer-events:auto}
+.adm-drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:#fff;transform:translateX(100%);transition:.25s;z-index:41;display:flex;flex-direction:column}
+.adm-drawer.show{transform:none}
+.adm-drawer-head,.adm-drawer-foot{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.adm-drawer-foot{border:0;border-top:1px solid var(--line);gap:10px}
+.adm-drawer-body{padding:22px;overflow:auto;flex:1}
+
+.adm-toast{position:fixed;top:18px;right:18px;max-width:340px;background:var(--ink);color:#fff;padding:13px 18px;border-radius:10px;box-shadow:var(--shadow);transform:translateX(130%);transition:.3s;z-index:60}
+.adm-toast.show{transform:none}.adm-toast.error{background:var(--bad)}.adm-toast.ok{background:var(--ok)}
+
+/* Đăng nhập */
+.adm-login{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#fbfaf7,#f1ede4)}
+.adm-login .adm-card{width:min(420px,100%);padding:32px 28px;overflow:visible}
+.adm-login h1{font-size:40px;margin:22px 0 6px}.adm-login .adm-brand{color:var(--ink);margin:0}
+.adm-login .adm-mark{border-color:var(--ink)}.adm-login .adm-brand small{color:var(--muted)}
+
+@media(max-width:760px){
+  .adm-side{display:none}
+  .adm-main{padding:22px 16px calc(96px + env(safe-area-inset-bottom))}
+  .adm-logout-m{display:inline-flex}
+  .adm-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--ink);padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:30}
+  .adm-tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:10px;color:#b9c7c6;text-decoration:none;font-size:11px}
+  .adm-tabbar a i{font-style:normal;font-size:18px}.adm-tabbar a.on{background:var(--accent);color:#fff}
+  .adm-table thead{display:none}
+  .adm-table,.adm-table tbody,.adm-table tr,.adm-table td{display:block}
+  .adm-table tr{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+  .adm-table td{border:0;padding:5px 0;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .adm-table td:before{content:attr(data-label);color:var(--muted);font-size:11px}
+  .adm-drawer{top:auto;width:100%;height:92vh;border-radius:18px 18px 0 0;transform:translateY(100%)}
+}

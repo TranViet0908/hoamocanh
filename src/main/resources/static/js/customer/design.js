@@ -46,6 +46,7 @@ const GROUPS = {
 const state = {
     step: 1,
     filter: 'all',
+    group: null,            // lọc theo nhóm (bấm nhãn Hoa chính/Hoa phụ...), null = không lọc
     budget: 700000,
     style: 'Dịu dàng',
     themeColor: null,       // tone màu (tùy chọn)
@@ -124,13 +125,15 @@ function renderLimits() {
         const lim = groupLimit(g), n = groupCount(g);
         if (lim === null || (lim === 0 && n === 0)) return '';
         const cls = n > lim ? 'over' : n === lim ? 'full' : '';
-        return `<span class="mt-chip ${cls}">${GROUPS[g].label}: <b>${n}/${lim}</b></span>`;
+        const on = state.group === g ? 'active' : '';
+        return `<button type="button" class="mt-chip ${cls} ${on}" data-group="${g}" aria-pressed="${!!on}">${GROUPS[g].label}: <b>${n}/${lim}</b></button>`;
     }).join('');
 }
 
 function renderMaterials() {
     const box = $('#materials');
-    const list = state.materials.filter(m => state.filter === 'all' || GROUPS[m.group].tab === state.filter);
+    const list = state.materials.filter(m => (state.filter === 'all' || GROUPS[m.group].tab === state.filter)
+        && (!state.group || m.group === state.group));
 
     if (!list.length) {
         box.innerHTML = '<p style="color:var(--muted)">Hiện chưa có nguyên liệu phù hợp với lựa chọn của bạn.</p>';
@@ -354,8 +357,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         $$('.material-tabs button').forEach(x => x.classList.remove('selected'));
         b.classList.add('selected');
         state.filter = b.dataset.filter;
+        state.group = null;
         renderMaterials();
     });
+
+    // Bước 4: bấm nhãn định mức để lọc theo nhóm, bấm lại để tắt (quay về "Tất cả")
+    $('#limitBar').onclick = e => {
+        const chip = e.target.closest('[data-group]');
+        if (!chip) return;
+        const g = chip.dataset.group;
+        if (state.group === g) { state.group = null; state.filter = 'all'; }
+        else { state.group = g; state.filter = GROUPS[g].tab; }
+        $$('.material-tabs button').forEach(x => x.classList.toggle('selected', x.dataset.filter === state.filter));
+        renderMaterials();
+    };
 
     // Bước 4: tăng/giảm số lượng (chặn theo kho + định mức nhóm)
     $('#materials').onclick = e => {

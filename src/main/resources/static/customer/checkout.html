@@ -4,45 +4,53 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Chốt đơn — Mộc Anh</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/design.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/moc-anh.css">
 </head>
-<body>
+<body class="page-checkout">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-gift" viewBox="0 0 48 48"><rect x="8" y="22" width="32" height="18" rx="2"/><path d="M6 15h36v7H6zM24 15v25M24 15c-3-7-11-7-11-3s8 3 11 3zM24 15c3-7 11-7 11-3s-8 3-11 3z"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 48 48"><circle cx="13" cy="34" r="5"/><circle cx="13" cy="14" r="5"/><path d="M17 17l23 18M17 31L40 13"/></symbol>
+    <symbol id="i-box" viewBox="0 0 48 48"><path d="M6 15l18-8 18 8v19l-18 8-18-8z"/><path d="M6 15l18 8 18-8M24 23v19"/></symbol>
+</svg>
+<a class="skip-link" href="#main-content">Bỏ qua đến nội dung</a>
 <header class="site-header">
     <a class="brand" href="/customer/index.html">
         <span class="brand-mark">MA</span>
         <span><b>MỘC ANH</b><small>flower studio</small></span>
     </a>
-    <a href="/customer/design.html">← Sửa thiết kế</a>
+    <a class="nav-link" href="/customer/design.html">← Sửa thiết kế</a>
 </header>
 
-<main class="flow">
+<main id="main-content" class="flow">
     <div class="flow-shell">
         <p class="eyebrow">Hoàn tất yêu cầu</p>
-        <h2>Chốt đơn</h2>
+        <h2>Chốt <i>đơn</i></h2>
 
         <div id="orderSummary" class="mt-summary"></div>
 
         <p class="mt-sub">Hình thức</p>
         <div class="output-tabs" id="outputTabs">
-            <button type="button" class="selected" data-output="ONLINE">Gửi tặng online</button>
-            <button type="button" data-output="PICKUP">Tự làm tại tiệm</button>
-            <button type="button" data-output="DELIVERY">Mộc Anh làm giúp</button>
+            <button type="button" class="selected" data-output="ONLINE"><svg class="ico"><use href="#i-gift"/></svg><span>Gửi tặng online</span></button>
+            <button type="button" data-output="PICKUP"><svg class="ico"><use href="#i-hand"/></svg><span>Tự làm tại tiệm</span></button>
+            <button type="button" data-output="DELIVERY"><svg class="ico"><use href="#i-box"/></svg><span>Mộc Anh làm giúp</span></button>
         </div>
         <p class="mt-hint" id="outputHint"></p>
 
         <form id="checkoutForm" novalidate>
             <label>Họ và tên<input name="name" required autocomplete="name"></label>
-            <label>Số điện thoại<input name="phone" type="tel" required autocomplete="tel"></label>
+            <label>Số điện thoại<input name="phone" type="tel" required autocomplete="tel" inputmode="tel"></label>
             <label id="fieldTime" hidden><span id="timeLabel">Thời gian</span><input name="time" type="datetime-local"></label>
             <label id="fieldAddress" hidden>Địa chỉ nhận hàng<textarea name="address" rows="3"></textarea></label>
 
             <div id="fieldGift">
                 <label>Lời chúc gửi người nhận<textarea name="gift" rows="3"></textarea></label>
-                <label style="margin-top:14px">Ảnh kèm theo <small>(không bắt buộc · jpg, png, webp · tối đa 8MB)</small>
+                <label>Ảnh kèm theo <small>(không bắt buộc · jpg, png, webp · tối đa 8MB)</small>
                     <input type="file" id="giftImage" accept="image/jpeg,image/png,image/webp"></label>
                 <small id="giftImageStatus" class="mt-upload"></small>
-                <label style="margin-top:14px">Video kèm theo <small>(không bắt buộc · mp4, webm · tối đa 40MB)</small>
+                <label>Video kèm theo <small>(không bắt buộc · mp4, webm · tối đa 40MB)</small>
                     <input type="file" id="giftVideo" accept="video/mp4,video/webm"></label>
                 <small id="giftVideoStatus" class="mt-upload"></small>
             </div>
@@ -52,7 +60,7 @@
 
             <div>
                 <p class="mt-sub" style="margin-top:6px">Thanh toán</p>
-                <div class="material-tabs" id="payTabs" style="margin-bottom:8px">
+                <div class="material-tabs" id="payTabs">
                     <button type="button" class="selected" data-pay="CASH">Thanh toán trực tiếp</button>
                     <button type="button" data-pay="ONLINE">Thanh toán online</button>
                 </div>
