@@ -1,5 +1,6 @@
 package com.hoamocanh.config;
 
+import com.hoamocanh.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.context.SecurityContextRepository;
 
 import java.io.IOException;
@@ -37,13 +39,14 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, UserRepository userRepository) throws Exception {
         http
                 .cors(Customizer.withDefaults())
                 // Phiên đăng nhập dùng cookie HttpOnly + SameSite=Lax (xem application.properties) và CORS
                 // không cho gửi cookie chéo site, nên có thể tắt CSRF token cho API JSON.
                 .csrf(csrf -> csrf.disable())
                 .securityContext(sc -> sc.securityContextRepository(securityContextRepository()))
+                .addFilterAfter(new ActiveStaffFilter(userRepository), SecurityContextHolderFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         // --- Trang quản trị ---
                         .requestMatchers("/admin/auth/login", "/admin/login.html").permitAll()

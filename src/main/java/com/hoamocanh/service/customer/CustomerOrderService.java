@@ -8,6 +8,7 @@ import com.hoamocanh.dto.customer.OrderCheckoutRes;
 import com.hoamocanh.repository.MaterialRepository;
 import com.hoamocanh.repository.OrderRepository;
 import com.hoamocanh.repository.ProductTypeRepository;
+import com.hoamocanh.service.admin.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,7 @@ public class CustomerOrderService {
     private final CustomerDesignService designService;
     private final CustomerVoucherService voucherService;
     private final QRCodeGenerator qrCodeGenerator;
+    private final BookingService bookingService;
 
     private static boolean blank(String s) {
         return s == null || s.trim().isEmpty();
@@ -79,6 +81,8 @@ public class CustomerOrderService {
     @Transactional
     public OrderCheckoutRes processCheckout(CheckoutReq req) {
         validateRequest(req);
+        // Khách tự làm tại tiệm: phải đúng khung giờ còn chỗ (khóa dòng cấu hình để không bị đặt trùng chỗ cuối)
+        if ("PICKUP".equals(req.getDeliveryType())) bookingService.assertSlotAvailable(req.getDeliveryTime());
 
         // 1. Gộp dòng trùng materialId (toMap cũ sẽ ném lỗi nếu trùng)
         Map<Integer, Integer> itemMap = req.getItems().stream()

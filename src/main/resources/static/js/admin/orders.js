@@ -177,5 +177,5 @@
         catch (_) { window.prompt('Sao chép link này:', cur.giftUrl); }
     });
 
-    try { await load(); } catch (e) { $('#rows').innerHTML = `<tr><td colspan="7" class="od-empty">${esc(e.message)}</td></tr>`; }
+    try { await load(); const qid = new URLSearchParams(location.search).get('id'); if (qid) openOrder(+qid); } catch (e) { $('#rows').innerHTML = `<tr><td colspan="7" class="od-empty">${esc(e.message)}</td></tr>`; }
 })();

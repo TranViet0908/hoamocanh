@@ -3,7 +3,11 @@
     const NAV = [
         { href: 'dashboard.html', label: 'Tổng quan', icon: '◧' },
         { href: 'inventory.html', label: 'Kho hoa', icon: '❀' },
-        { href: 'orders.html', label: 'Đơn hàng', icon: '☰' }
+        { href: 'orders.html', label: 'Đơn hàng', icon: '☰' },
+        { href: 'calendar.html', label: 'Lịch', icon: '▦' },
+        { href: 'pricing.html', label: 'Mức giá', icon: '₫', role: 'ADMIN' },
+        { href: 'staff.html', label: 'Nhân viên', icon: '☺', role: 'ADMIN' },
+        { href: 'settings.html', label: 'Cài đặt', icon: '⚙' }
         // Thêm trang mới: { href: 'pricing.html', label: 'Mức giá', icon: '₫', role: 'ADMIN' }
     ];
 

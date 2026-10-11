@@ -52,6 +52,59 @@ document.addEventListener('DOMContentLoaded', () => {
         gift: { box: form.querySelector('#fieldGift'), input: form.elements.gift }
     };
 
+    // ----- Đặt lịch đến tiệm (PICKUP): chọn ngày rồi chọn khung giờ còn chỗ. Hình thức khác vẫn dùng ô nhập giờ -----
+    let picker = null;
+    const pad = n => String(n).padStart(2, '0');
+    const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    function togglePicker(on) {
+        const input = fields.time.input;
+        if (!on) { if (picker) picker.hidden = true; input.style.display = ''; return; }
+        input.style.display = 'none'; input.value = '';
+        if (!picker) {
+            picker = document.createElement('div');
+            picker.innerHTML = '<input type="date" id="bkDate" style="width:100%;margin-bottom:10px">' +
+                '<div id="bkSlots" class="choice-grid" style="margin-bottom:6px"></div>' +
+                '<p id="bkHint" style="font-size:12px;color:var(--muted);margin:0"></p>';
+            fields.time.box.appendChild(picker);
+            const d = picker.querySelector('#bkDate'), t = new Date(), max = new Date();
+            max.setDate(t.getDate() + 30);
+            d.min = ymd(t); d.max = ymd(max);
+            d.onchange = () => loadSlots(d.value);
+        }
+        picker.hidden = false;
+        picker.querySelector('#bkDate').value = '';
+        picker.querySelector('#bkSlots').innerHTML = '';
+        picker.querySelector('#bkHint').textContent = 'Chọn ngày bạn muốn đến tiệm để xem các khung giờ còn chỗ.';
+    }
+
+    async function loadSlots(date) {
+        const box = picker.querySelector('#bkSlots'), hint = picker.querySelector('#bkHint');
+        fields.time.input.value = ''; box.innerHTML = '';
+        if (!date) return;
+        hint.textContent = 'Đang tải khung giờ...';
+        try {
+            const res = await fetch(`${API_BASE}/booking/slots?date=${encodeURIComponent(date)}`);
+            let data = null; try { data = await res.json(); } catch (_) {}
+            if (!res.ok) throw new Error(data?.message || `Lỗi máy chủ (${res.status})`);
+            hint.textContent = data.some(s => s.available)
+                ? 'Chọn một khung giờ, số chỗ còn lại ghi trong ngoặc.'
+                : 'Ngày này đã hết chỗ, vui lòng chọn ngày khác.';
+            data.forEach(s => {
+                const b = document.createElement('button');
+                b.type = 'button'; b.className = 'choice'; b.disabled = !s.available;
+                if (!s.available) b.style.opacity = '.45';
+                b.textContent = s.available ? `${s.label} (còn ${s.remaining})` : `${s.label} (hết chỗ)`;
+                b.onclick = () => {
+                    box.querySelectorAll('.choice').forEach(x => x.classList.remove('selected'));
+                    b.classList.add('selected');
+                    fields.time.input.value = `${date}T${s.start}`;   // submit đọc giá trị này như cũ
+                };
+                box.appendChild(b);
+            });
+        } catch (err) { hint.textContent = err.message; }
+    }
+
     function applyMode(mode) {
         outputType = mode;
         const cfg = MODES[mode];
@@ -61,9 +114,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!cfg[k]) fields[k].input.value = '';
         });
         if (!cfg.gift) resetMedia();
-        fields.time.input.required = cfg.time;
+        fields.time.input.required = cfg.time && mode !== 'PICKUP';   // PICKUP: chọn khung giờ, kiểm tra ở bước gửi đơn
         fields.address.input.required = cfg.address;
         if (cfg.time) document.querySelector('#timeLabel').textContent = cfg.timeLabel;
+        togglePicker(mode === 'PICKUP');
     }
 
     // Không cho chọn thời điểm trong quá khứ

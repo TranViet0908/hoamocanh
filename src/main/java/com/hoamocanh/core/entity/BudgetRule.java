@@ -33,4 +33,8 @@ public class BudgetRule {
 
     @Column(name = "max_packaging", nullable = false)
     private Integer maxPackaging;
+
+    // MỚI: khóa/mở một mức giá (null hoặc true = đang mở)
+    @Column(name = "active", columnDefinition = "tinyint(1) default 1")
+    private Boolean active;
 }
