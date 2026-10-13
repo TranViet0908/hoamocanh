@@ -17,6 +17,10 @@ public interface BudgetRuleRepository extends JpaRepository<BudgetRule, Integer>
     @Query("SELECT r FROM BudgetRule r WHERE r.budgetLevel = :level AND (r.active IS NULL OR r.active = true)")
     Optional<BudgetRule> findByBudgetLevel(@Param("level") BigDecimal level);
 
+    // Phía khách: danh sách mức giá đang MỞ (tăng dần) để dựng thanh chọn ngân sách
+    @Query("SELECT r.budgetLevel FROM BudgetRule r WHERE r.active IS NULL OR r.active = true ORDER BY r.budgetLevel")
+    List<BigDecimal> findActiveLevels();
+
     // Admin: tất cả mức, kể cả đang khóa
     List<BudgetRule> findAllByOrderByBudgetLevelAsc();
 

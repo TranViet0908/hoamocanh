@@ -1,11 +1,14 @@
 package com.hoamocanh.repository;
 
 import com.hoamocanh.core.entity.Material;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MaterialRepository extends JpaRepository<Material, Integer> {
@@ -17,4 +20,9 @@ public interface MaterialRepository extends JpaRepository<Material, Integer> {
     // MỚI (admin): toàn bộ nguyên liệu kể cả đang ẩn, nạp sẵn category để không bị N+1
     @Query("SELECT m FROM Material m JOIN FETCH m.category ORDER BY m.category.id, m.name")
     List<Material> findAllWithCategory();
+
+    // MỚI (admin): đọc nguyên liệu kèm khóa ghi để cộng/trừ tồn kho an toàn khi đang có khách đặt hàng
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Material m JOIN FETCH m.category WHERE m.id = :id")
+    Optional<Material> findByIdForUpdate(@Param("id") Integer id);
 }

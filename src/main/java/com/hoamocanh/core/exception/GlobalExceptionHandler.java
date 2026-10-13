@@ -6,11 +6,18 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.ErrorResponse;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -81,5 +88,39 @@ public class GlobalExceptionHandler {
         String msg = ex.getBindingResult().getFieldErrors().stream()
                 .map(e -> e.getDefaultMessage()).findFirst().orElse("Dữ liệu không hợp lệ.");
         return ResponseEntity.badRequest().body(Map.of("error", "Bad Request", "message", msg));
+    }
+
+    // File tải lên vượt giới hạn trong application.properties
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> handleTooLarge(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", "Bad Request", "message", "Tệp tải lên quá lớn."));
+    }
+
+    // JSON gửi lên sai định dạng (thiếu dấu, sai kiểu dữ liệu...)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleUnreadable(HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", "Bad Request", "message", "Dữ liệu gửi lên không hợp lệ."));
+    }
+
+    // Không đủ quyền (VD: STAFF gọi API chỉ dành cho ADMIN). Phải khai báo riêng để nhánh Exception bên dưới không nuốt thành 500.
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Forbidden", "message", "Bạn không có quyền thực hiện thao tác này."));
+    }
+
+    // Lỗi còn lại: ghi log để tra cứu, trả thông báo thân thiện thay vì "Lỗi máy chủ (500)" trống
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleOther(Exception ex) {
+        // Các lỗi chuẩn của Spring MVC (404 không có trang, 405, thiếu tham số...) giữ nguyên mã trạng thái của chúng
+        if (ex instanceof ErrorResponse er) {
+            return ResponseEntity.status(er.getStatusCode())
+                    .body(Map.of("error", "Error", "message", "Yêu cầu không hợp lệ."));
+        }
+        log.error("Lỗi không mong đợi", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Internal Server Error", "message", "Hệ thống gặp sự cố, vui lòng thử lại sau."));
     }
 }

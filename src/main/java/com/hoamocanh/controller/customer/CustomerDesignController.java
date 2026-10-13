@@ -28,6 +28,12 @@ public class CustomerDesignController {
         return ResponseEntity.ok(designService.getAvailableMaterialsForDesign(productType, budgetLevel));
     }
 
+    // Các mức giá đang mở (tăng dần), VD [400000, 500000, 800000]
+    @GetMapping("/budget-levels")
+    public ResponseEntity<List<BigDecimal>> getBudgetLevels() {
+        return ResponseEntity.ok(designService.getBudgetLevels());
+    }
+
     // MỚI
     @GetMapping("/limits")
     public ResponseEntity<DesignLimitsRes> getLimits(@RequestParam BigDecimal budgetLevel) {

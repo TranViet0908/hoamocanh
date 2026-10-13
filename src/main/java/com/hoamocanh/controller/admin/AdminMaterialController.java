@@ -42,6 +42,12 @@ public class AdminMaterialController {
         return ResponseEntity.ok(materialService.updateStock(id, req.stock()));
     }
 
+    // Cộng/trừ tồn kho theo mức thay đổi (nút +/- trên trang Kho)
+    @PatchMapping("/{id}/stock/adjust")
+    public ResponseEntity<MaterialRes> adjustStock(@PathVariable Integer id, @Valid @RequestBody StockAdjustReq req) {
+        return ResponseEntity.ok(materialService.adjustStock(id, req.delta()));
+    }
+
     // Ẩn / hiện với khách
     @PatchMapping("/{id}/visibility")
     public ResponseEntity<MaterialRes> visibility(@PathVariable Integer id, @Valid @RequestBody VisibilityReq req) {

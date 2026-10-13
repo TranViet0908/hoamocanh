@@ -1,4 +1,5 @@
 const API_BASE = '/customer';
+// Chỉ dùng làm DỰ PHÒNG khi không tải được danh sách mức giá từ server (/design/budget-levels).
 const BUDGET_MIN = 400000, BUDGET_MAX = 1500000, BUDGET_STEP = 100000;
 
 // ===== Helpers =====
@@ -48,6 +49,7 @@ const state = {
     filter: 'all',
     group: null,            // lọc theo nhóm (bấm nhãn Hoa chính/Hoa phụ...), null = không lọc
     budget: 700000,
+    levels: [],             // các mức giá đang mở do admin cấu hình (tăng dần)
     style: 'Dịu dàng',
     themeColor: null,       // tone màu (tùy chọn)
     occasion: null,         // mục đích tặng (tùy chọn)
@@ -174,9 +176,9 @@ function updateCart() {
     if (total > state.budget) {
         msg.textContent = `Vượt ${money(total - state.budget)}`;
         msg.classList.add('mt-over');
-        const next = state.budget + BUDGET_STEP;
-        raise.hidden = next > BUDGET_MAX;
-        raise.textContent = `Nâng lên ${money(next)}`;
+        const next = nextLevel();
+        raise.hidden = next === null;
+        if (next !== null) raise.textContent = `Nâng lên ${money(next)}`;
     } else {
         msg.textContent = `Còn ${money(state.budget - total)} trong ngân sách`;
         msg.classList.remove('mt-over');
@@ -220,15 +222,46 @@ function renderSummary() {
         </div>`;
 }
 
-// ===== Thanh ngân sách: không thấp hơn mức tối thiểu của loại sản phẩm =====
+// ===== Thanh ngân sách: chỉ gồm các mức giá admin đang mở, không thấp hơn mức tối thiểu của loại sản phẩm =====
+async function loadBudgetLevels() {
+    try {
+        const d = await api('/design/budget-levels');
+        state.levels = (d || []).map(Number).filter(n => n > 0).sort((x, y) => x - y);
+    } catch (_) {
+        // Server cũ chưa có API này: dùng dải mặc định như trước
+        state.levels = [];
+        for (let v = BUDGET_MIN; v <= BUDGET_MAX; v += BUDGET_STEP) state.levels.push(v);
+    }
+}
+
+function availableLevels() {
+    const min = state.productType?.minPrice ?? 0;
+    return state.levels.filter(l => l >= min);
+}
+
+function nextLevel() {
+    const n = availableLevels().find(l => l > state.budget);
+    return n === undefined ? null : n;
+}
+
+// Thanh trượt đi theo THỨ TỰ các mức (0, 1, 2...) chứ không theo số tiền, nên mức bị khóa sẽ tự được bỏ qua
 function applyBudgetFloor() {
-    const slider = $('#budget');
-    const floor = Math.min(BUDGET_MAX, Math.max(BUDGET_MIN,
-        Math.ceil((state.productType?.minPrice ?? BUDGET_MIN) / BUDGET_STEP) * BUDGET_STEP));
-    slider.min = floor;
-    $('.range-labels span:first-child').textContent = money(floor);
-    if (state.budget < floor) state.budget = floor;
-    slider.value = state.budget;
+    const slider = $('#budget'), lv = availableLevels();
+    const labels = $$('.range-labels span');
+    if (!lv.length) {
+        slider.disabled = true;
+        $('#budgetText').textContent = 'Chưa có mức giá';
+        labels.forEach(s => s.textContent = '—');
+        return;
+    }
+    let idx = lv.findIndex(l => l >= state.budget);       // mức đang chọn bị khóa/thấp hơn mức tối thiểu -> lấy mức gần nhất phía trên
+    if (idx < 0) idx = lv.length - 1;
+    state.budget = lv[idx];
+    slider.min = 0; slider.max = lv.length - 1; slider.step = 1; slider.value = idx;
+    slider.disabled = lv.length < 2;
+    slider.setAttribute('aria-valuetext', money(state.budget));
+    labels[0].textContent = money(lv[0]);
+    labels[labels.length - 1].textContent = money(lv[lv.length - 1]);
     $('#budgetText').textContent = money(state.budget);
 }
 
@@ -299,6 +332,7 @@ function goTo(n) {
 async function tryNext() {
     const n = state.step;
     if (n === 1 && !state.productType) return showModal('Vui lòng chọn một loại sản phẩm.');
+    if (n === 2 && !availableLevels().length) return showModal('Hiện chưa có mức giá phù hợp với loại sản phẩm này. Vui lòng liên hệ cửa hàng.');
     if (n === 4) {
         if (!cartItems().length) return showModal('Bạn chưa chọn nguyên liệu nào!');
         try { await validateWithServer(); }
@@ -328,7 +362,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Bước 2: ngân sách (cập nhật số khi kéo, gọi server khi thả)
     const slider = $('#budget');
     slider.oninput = e => {
-        state.budget = +e.target.value;
+        const lv = availableLevels();
+        state.budget = lv[+e.target.value] ?? state.budget;
+        slider.setAttribute('aria-valuetext', money(state.budget));
         $('#budgetText').textContent = money(state.budget);
         updateCart();
     };
@@ -386,9 +422,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Gợi ý nâng lên mức giá kế tiếp khi vượt ngân sách
     $('#raiseBudget').onclick = () => {
-        state.budget = Math.min(BUDGET_MAX, state.budget + BUDGET_STEP);
-        slider.value = state.budget;
-        $('#budgetText').textContent = money(state.budget);
+        const next = nextLevel();
+        if (next === null) return;
+        state.budget = next;
+        applyBudgetFloor();            // đồng bộ lại vị trí thanh trượt
         loadMaterials();
     };
 
@@ -420,6 +457,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     $('#budgetText').textContent = money(state.budget);
+    await loadBudgetLevels();
     await loadProductTypes();
     await loadMaterials();
 });

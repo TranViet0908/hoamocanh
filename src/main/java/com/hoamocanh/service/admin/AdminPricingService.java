@@ -94,7 +94,7 @@ public class AdminPricingService {
     }
 
     private static TypeRes toRes(ProductType t) {
-        List<Integer> ids = Arrays.stream(t.getAllowedCategoryIds().split(",")).map(String::trim)
+        List<Integer> ids = Arrays.stream((t.getAllowedCategoryIds() == null ? "" : t.getAllowedCategoryIds()).split(",")).map(String::trim)
                 .filter(s -> !s.isEmpty()).map(Integer::parseInt).toList();
         return new TypeRes(t.getId(), t.getName(), t.getMinBudget(), ids);
     }

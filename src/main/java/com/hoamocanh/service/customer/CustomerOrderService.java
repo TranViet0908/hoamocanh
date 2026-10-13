@@ -42,6 +42,10 @@ public class CustomerOrderService {
         return s == null || s.trim().isEmpty();
     }
 
+    private static boolean tooLong(String s, int max) {
+        return s != null && s.length() > max;
+    }
+
     // MỚI: kiểm tra dữ liệu đầu vào theo từng hình thức đầu ra
     private void validateRequest(CheckoutReq req) {
         if (req.getItems() == null || req.getItems().isEmpty()) {
@@ -52,6 +56,22 @@ public class CustomerOrderService {
         }
         if (blank(req.getReceiverName()) || blank(req.getReceiverPhone())) {
             throw new IllegalArgumentException("Vui lòng nhập họ tên và số điện thoại.");
+        }
+        // Giới hạn theo độ dài cột trong DB và định dạng số điện thoại (không chỉ tin vào kiểm tra phía trình duyệt)
+        if (req.getReceiverName().trim().length() > 100) {
+            throw new IllegalArgumentException("Họ tên tối đa 100 ký tự.");
+        }
+        if (!req.getReceiverPhone().trim().replaceAll("[\\s.-]", "").matches("^(0|\\+84)\\d{9,10}$")) {
+            throw new IllegalArgumentException("Số điện thoại chưa đúng định dạng.");
+        }
+        if (tooLong(req.getStyle(), 50) || tooLong(req.getThemeColor(), 50)) {
+            throw new IllegalArgumentException("Thông tin phong cách không hợp lệ.");
+        }
+        if (tooLong(req.getStyleNote(), 1000) || tooLong(req.getGiftMessage(), 1000)) {
+            throw new IllegalArgumentException("Ghi chú hoặc lời chúc tối đa 1000 ký tự.");
+        }
+        if (tooLong(req.getVoucherCode(), 50)) {
+            throw new IllegalArgumentException("Mã giảm giá không hợp lệ.");
         }
         if (req.getDeliveryType() == null || !DELIVERY_TYPES.contains(req.getDeliveryType())) {
             throw new IllegalArgumentException("Hình thức đầu ra không hợp lệ.");

@@ -98,15 +98,37 @@
     }
 
     // ---------- Tồn kho: đổi ngay trên màn hình, gửi server sau 0,5 giây ----------
-    function setStock(m, value) {
-        m.stock = Math.max(0, Math.floor(Number(value) || 0));
-        render();
+    // Nút +/-  : gửi MỨC THAY ĐỔI (cộng dồn) -> server cộng trừ trên số tồn thật, không ghi đè đơn khách vừa đặt.
+    // Gõ số / "Hết hàng": gửi SỐ ĐẾM THỰC TẾ (đặt tuyệt đối), dùng khi kiểm kê kho.
+    let inflight = 0;
+    function queue(m) {
+        if (!timers[m.id]) inflight++;
         clearTimeout(timers[m.id]);
         timers[m.id] = setTimeout(async () => {
-            try { adopt(m, await api(`/materials/${m.id}/stock`, { method: 'PATCH', body: { stock: m.stock } })); }
-            catch (e) { m.stock = m._saved; toast(e.message, 'error'); }
+            const delta = m._delta || 0, abs = m._abs;
+            m._delta = 0; m._abs = null; delete timers[m.id];
+            const expected = m.stock;
+            try {
+                const r = abs != null
+                    ? await api(`/materials/${m.id}/stock`, { method: 'PATCH', body: { stock: abs } })
+                    : await api(`/materials/${m.id}/stock/adjust`, { method: 'PATCH', body: { delta } });
+                adopt(m, r);
+                if (r.stock !== expected) toast(`${m.name}: tồn kho thực tế hiện là ${r.stock}.`, 'ok');
+            } catch (e) { m.stock = m._saved; toast(e.message, 'error'); }
+            finally { inflight--; }
             render();
         }, 500);
+    }
+    function setStock(m, value) {
+        m.stock = Math.max(0, Math.floor(Number(value) || 0));
+        m._abs = m.stock; m._delta = 0;
+        render(); queue(m);
+    }
+    function bump(m, d) {
+        const before = m.stock;
+        m.stock = Math.max(0, m.stock + d);
+        if (m._abs != null) m._abs = m.stock; else m._delta = (m._delta || 0) + (m.stock - before);
+        render(); queue(m);
     }
 
     async function toggleHidden(m) {
@@ -120,11 +142,12 @@
     $('#list').addEventListener('click', e => {
         const btn = e.target.closest('[data-act]'); if (!btn || btn.tagName === 'INPUT') return;
         const m = items.find(x => x.id === +btn.closest('.inv-row').dataset.id);
-        ({ inc: () => setStock(m, m.stock + 1), dec: () => setStock(m, m.stock - 1), zero: () => setStock(m, 0),
+        ({ inc: () => bump(m, 1), dec: () => bump(m, -1), zero: () => setStock(m, 0),
            edit: () => openForm(m), hide: () => toggleHidden(m) })[btn.dataset.act]?.();
     });
     $('#list').addEventListener('change', e => {
         if (e.target.dataset.act !== 'set') return;
+        e.target.blur();   // rời ô nhập trước khi vẽ lại danh sách, tránh sự kiện blur lồng nhau
         setStock(items.find(x => x.id === +e.target.closest('.inv-row').dataset.id), e.target.value);
     });
 
@@ -183,6 +206,11 @@
         } catch (ex) { err.textContent = ex.message; }
         finally { btn.disabled = false; }
     });
+
+    // Tự làm mới mỗi phút (khi không có thay đổi đang chờ gửi, không mở form và không đang gõ) để thấy số tồn mới sau khi khách đặt hàng
+    setInterval(() => {
+        if (!inflight && !dw.classList.contains('show') && document.activeElement?.tagName !== 'INPUT') load().catch(() => { });
+    }, 60000);
 
     try { await load(); } catch (e) { $('#list').innerHTML = `<div class="adm-card inv-empty">${esc(e.message)}</div>`; }
 })();

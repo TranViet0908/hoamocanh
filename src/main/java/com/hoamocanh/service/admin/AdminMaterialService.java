@@ -59,6 +59,16 @@ public class AdminMaterialService {
         return MaterialRes.from(materialRepository.save(m));
     }
 
+    // Cộng/trừ theo mức thay đổi trên số tồn HIỆN TẠI trong DB (không thấp hơn 0)
+    @Transactional
+    public MaterialRes adjustStock(Integer id, int delta) {
+        Material m = materialRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nguyên liệu."));
+        int current = m.getStock() == null ? 0 : m.getStock();
+        m.setStock(Math.max(0, current + delta));
+        return MaterialRes.from(materialRepository.save(m));
+    }
+
     @Transactional
     public MaterialRes setHidden(Integer id, boolean hidden) {
         Material m = find(id);

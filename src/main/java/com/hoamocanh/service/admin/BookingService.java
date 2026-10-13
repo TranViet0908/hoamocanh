@@ -45,8 +45,9 @@ public class BookingService {
     public BookingConfig saveConfig(BookingConfig c) {
         int open = LocalTime.parse(c.open()).toSecondOfDay() / 60, close = LocalTime.parse(c.close()).toSecondOfDay() / 60;
         if (open >= close) throw new IllegalArgumentException("Giờ đóng cửa phải sau giờ mở cửa.");
-        if ((close - open) % c.slotMinutes() != 0) {
-            throw new IllegalArgumentException("Thời gian mở cửa phải chia hết cho độ dài mỗi khung (VD: 9:00 - 18:00 chia được cho 60, 90, 180 phút).");
+        // Phần giờ lẻ cuối ngày (VD 17:00-18:00 khi khung 120 phút) đơn giản là không mở thêm khung
+        if (close - open < c.slotMinutes()) {
+            throw new IllegalArgumentException("Khoảng giờ mở cửa phải dài hơn một khung giờ.");
         }
         put(K_OPEN, c.open(), "Giờ mở cửa nhận khách đặt lịch");
         put(K_CLOSE, c.close(), "Giờ đóng cửa nhận khách đặt lịch");

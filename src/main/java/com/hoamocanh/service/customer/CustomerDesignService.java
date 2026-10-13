@@ -50,12 +50,21 @@ public class CustomerDesignService {
             throw new IllegalArgumentException("Ngân sách tối thiểu cho " + type.getName() + " là " + type.getMinBudget());
         }
 
+        // Mức giá phải đang mở (nếu admin vừa khóa thì báo ngay, không đợi tới bước kiểm tra cuối)
+        budgetRuleRepository.findByBudgetLevel(budgetLevel)
+                .orElseThrow(() -> new IllegalArgumentException("Mức giá này hiện không còn áp dụng, vui lòng chọn mức khác."));
+
         List<Integer> allowedCategoryIds = parseCategoryIds(type.getAllowedCategoryIds());
 
         return materialRepository.findAvailableMaterialsByCategories(allowedCategoryIds)
                 .stream()
                 .map(MaterialDto::from)
                 .collect(Collectors.toList());
+    }
+
+    // MỚI: các mức giá đang mở, để giao diện chỉ cho khách chọn trong danh sách này
+    public List<BigDecimal> getBudgetLevels() {
+        return budgetRuleRepository.findActiveLevels();
     }
 
     // MỚI: định mức theo mức giá, để giao diện báo "còn được chọn bao nhiêu"
