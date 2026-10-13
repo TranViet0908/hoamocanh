@@ -31,7 +31,9 @@ public class ActiveStaffFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         Authentication a = SecurityContextHolder.getContext().getAuthentication();
         if (a != null && a.isAuthenticated() && !(a instanceof AnonymousAuthenticationToken)
-                && req.getRequestURI().startsWith("/admin/")) {
+                && req.getRequestURI().startsWith("/admin/")
+                // Đăng nhập/đăng xuất phải chạy được kể cả khi phiên cũ của tài khoản đã bị khóa
+                && !req.getRequestURI().startsWith("/admin/auth/")) {
             boolean ok = userRepository.findByPhone(a.getName())
                     .filter(u -> !Boolean.TRUE.equals(u.getIsDeleted()))
                     .filter(u -> a.getAuthorities().stream().anyMatch(g -> g.getAuthority().equals("ROLE_" + u.getRole().getName())))

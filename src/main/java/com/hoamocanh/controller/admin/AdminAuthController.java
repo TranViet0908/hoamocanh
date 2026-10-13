@@ -34,6 +34,11 @@ public class AdminAuthController {
         Authentication auth = authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken.unauthenticated(req.getPhone().trim(), req.getPassword()));
 
+        // Chỉ ADMIN/STAFF mới được vào trang quản trị (bảng users có thể chứa cả khách hàng)
+        boolean staff = auth.getAuthorities().stream()
+                .anyMatch(g -> g.getAuthority().equals("ROLE_ADMIN") || g.getAuthority().equals("ROLE_STAFF"));
+        if (!staff) throw new org.springframework.security.authentication.BadCredentialsException("Không phải tài khoản quản trị");
+
         if (request.getSession(false) != null) request.changeSessionId();   // chống session fixation
 
         SecurityContext ctx = SecurityContextHolder.createEmptyContext();

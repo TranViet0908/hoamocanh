@@ -25,56 +25,56 @@
   </style>
 </head>
 <body>
-  <script src="/js/admin/admin-core.js"></script>
-  <script>
-    (async function () {
-      const { api, esc, money } = Admin;
-      const TYPE = { PICKUP: 'Tự làm tại tiệm', DELIVERY: 'Mộc Anh làm giúp' };
-      const ST = { PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', PREPARING: 'Đang chuẩn bị', IN_PROGRESS: 'Đang thực hiện',
-                   AWAITING_APPROVAL: 'Chờ khách duyệt', READY: 'Sẵn sàng giao/nhận' };
-      const hhmm = s => { const d = new Date(String(s).replace(' ', 'T')); return isNaN(d) ? '—' : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }); };
+<script src="/js/admin/admin-core.js"></script>
+<script>
+  (async function () {
+    const { api, esc, money } = Admin;
+    const TYPE = { PICKUP: 'Tự làm tại tiệm', DELIVERY: 'Mộc Anh làm giúp' };
+    const ST = { PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', PREPARING: 'Đang chuẩn bị', IN_PROGRESS: 'Đang thực hiện',
+                 AWAITING_APPROVAL: 'Chờ khách duyệt', READY: 'Sẵn sàng giao/nhận' };
+    const hhmm = s => { const d = new Date(String(s).replace(' ', 'T')); return isNaN(d) ? '—' : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }); };
 
-      const { page } = await Admin.mount({ active: 'dashboard.html', title: 'Tổng quan' });
-      page.innerHTML = '<div class="adm-card adm-muted">Đang tải số liệu...</div>';
+    const { page } = await Admin.mount({ active: 'dashboard.html', title: 'Tổng quan' });
+    page.innerHTML = '<div class="adm-card adm-muted">Đang tải số liệu...</div>';
 
-      async function load() {
-        const d = await api('/dashboard');
-        const diff = d.ordersToday - d.ordersYesterday;
-        const diffTxt = diff === 0 ? 'Bằng hôm qua' : (diff > 0 ? '+' : '−') + Math.abs(diff) + ' so với hôm qua';
-        const warn = d.lowStock + d.outOfStock;
-        const todo = [
-          ['Đơn chờ xác nhận', d.pending, 'orders.html?view=PENDING', true],
-          ['Đơn chờ khách duyệt ảnh', d.awaitingApproval, 'orders.html', true],
-          ['Đơn sẵn sàng giao/nhận', d.ready, 'orders.html', false],
-          ['Đơn chưa thu đủ tiền', d.unpaid, 'orders.html', false],
-          ['Nguyên liệu hết hoặc sắp hết', warn, 'inventory.html', true]
-        ];
-        page.innerHTML = `
-          <div class="adm-grid">
-            <a class="adm-card db-stat" href="orders.html"><p class="adm-eyebrow">Đơn mới hôm nay</p><b>${d.ordersToday}</b>
-              <small class="${diff > 0 ? 'up' : diff < 0 ? 'down' : ''}">${diffTxt}</small></a>
-            <div class="adm-card db-stat"><p class="adm-eyebrow">Doanh thu dự kiến</p><b>${money(d.revenueToday)}</b><small>Đơn đặt trong ngày (không tính đơn hủy)</small></div>
-            <a class="adm-card db-stat" href="orders.html?view=PENDING"><p class="adm-eyebrow">Chờ xác nhận</p><b>${d.pending}</b><small>${d.pending ? 'Cần xử lý ngay' : 'Không có đơn tồn'}</small></a>
-            <a class="adm-card db-stat" href="inventory.html"><p class="adm-eyebrow">Nguyên liệu cần nhập</p><b>${warn}</b><small>${d.outOfStock} hết hàng · ${d.lowStock} sắp hết</small></a>
-          </div>
-          <div class="db-cols">
-            <section class="adm-card"><h2>Việc cần xử lý</h2><div class="db-todo">${todo.map(([t, n, href, hot]) =>
-              `<a href="${href}"><b style="font-weight:500">${t}</b><span class="db-n ${n && hot ? 'hot' : ''}">${n}</span></a>`).join('')}</div></section>
-            <section class="adm-card"><h2>Lịch hôm nay</h2>${d.today.length ? d.today.map(t =>
-              `<a class="db-line" href="orders.html"><span class="db-time">${hhmm(t.time)}</span>
-                <span style="flex:1"><b>${esc(t.customerName)}</b> · ${esc(t.code)}<br><small class="adm-muted">${TYPE[t.deliveryType] || ''}</small></span>
-                <span class="adm-badge info">${ST[t.status] || esc(t.status)}</span></a>`).join('')
-              : '<p class="db-empty">Hôm nay chưa có khách hẹn đến hoặc cần giao.</p>'}</section>
-          </div>
-          <section class="adm-card" style="margin-top:14px"><h2 style="font-size:22px;margin-bottom:12px">Cần nhập thêm</h2>${d.lowItems.length ? d.lowItems.map(m =>
-            `<a class="db-line" href="inventory.html"><b style="font-weight:500">${esc(m.name)}</b>
-              <span class="adm-badge ${m.stock <= 0 ? 'bad' : 'warn'}">${m.stock <= 0 ? 'Hết hàng' : 'Còn ' + m.stock + (m.unit ? ' ' + esc(m.unit) : '')}</span></a>`).join('')
-            : '<p class="db-empty">Kho đang đủ hàng.</p>'}</section>`;
-      }
+    async function load() {
+      const d = await api('/dashboard');
+      const diff = d.ordersToday - d.ordersYesterday;
+      const diffTxt = diff === 0 ? 'Bằng hôm qua' : (diff > 0 ? '+' : '−') + Math.abs(diff) + ' so với hôm qua';
+      const warn = d.lowStock + d.outOfStock;
+      const todo = [
+        ['Đơn chờ xác nhận', d.pending, 'orders.html?view=PENDING', true],
+        ['Đơn chờ khách duyệt ảnh', d.awaitingApproval, 'orders.html', true],
+        ['Đơn sẵn sàng giao/nhận', d.ready, 'orders.html', false],
+        ['Đơn chưa thu đủ tiền', d.unpaid, 'orders.html', false],
+        ['Nguyên liệu hết hoặc sắp hết', warn, 'inventory.html', true]
+      ];
+      page.innerHTML = `
+        <div class="adm-grid">
+          <a class="adm-card db-stat" href="orders.html"><p class="adm-eyebrow">Đơn mới hôm nay</p><b>${d.ordersToday}</b>
+            <small class="${diff > 0 ? 'up' : diff < 0 ? 'down' : ''}">${diffTxt}</small></a>
+          <div class="adm-card db-stat"><p class="adm-eyebrow">Doanh thu dự kiến</p><b>${money(d.revenueToday)}</b><small>Đơn đặt trong ngày (không tính đơn hủy)</small></div>
+          <a class="adm-card db-stat" href="orders.html?view=PENDING"><p class="adm-eyebrow">Chờ xác nhận</p><b>${d.pending}</b><small>${d.pending ? 'Cần xử lý ngay' : 'Không có đơn tồn'}</small></a>
+          <a class="adm-card db-stat" href="inventory.html"><p class="adm-eyebrow">Nguyên liệu cần nhập</p><b>${warn}</b><small>${d.outOfStock} hết hàng · ${d.lowStock} sắp hết</small></a>
+        </div>
+        <div class="db-cols">
+          <section class="adm-card"><h2>Việc cần xử lý</h2><div class="db-todo">${todo.map(([t, n, href, hot]) =>
+            `<a href="${href}"><b style="font-weight:500">${t}</b><span class="db-n ${n && hot ? 'hot' : ''}">${n}</span></a>`).join('')}</div></section>
+          <section class="adm-card"><h2>Lịch hôm nay</h2>${d.today.length ? d.today.map(t =>
+            `<a class="db-line" href="orders.html?id=${t.id}"><span class="db-time">${hhmm(t.time)}</span>
+              <span style="flex:1"><b>${esc(t.customerName)}</b> · ${esc(t.code)}<br><small class="adm-muted">${TYPE[t.deliveryType] || ''}</small></span>
+              <span class="adm-badge info">${ST[t.status] || esc(t.status)}</span></a>`).join('')
+            : '<p class="db-empty">Hôm nay chưa có khách hẹn đến hoặc cần giao.</p>'}</section>
+        </div>
+        <section class="adm-card" style="margin-top:14px"><h2 style="font-size:22px;margin-bottom:12px">Cần nhập thêm</h2>${d.lowItems.length ? d.lowItems.map(m =>
+          `<a class="db-line" href="inventory.html"><b style="font-weight:500">${esc(m.name)}</b>
+            <span class="adm-badge ${m.stock <= 0 ? 'bad' : 'warn'}">${m.stock <= 0 ? 'Hết hàng' : 'Còn ' + m.stock + (m.unit ? ' ' + esc(m.unit) : '')}</span></a>`).join('')
+          : '<p class="db-empty">Kho đang đủ hàng.</p>'}</section>`;
+    }
 
-      try { await load(); } catch (e) { page.innerHTML = `<div class="adm-card adm-muted">${esc(e.message)}</div>`; }
-      setInterval(() => load().catch(() => { }), 60000);   // tự làm mới mỗi phút
-    })();
-  </script>
+    try { await load(); } catch (e) { page.innerHTML = `<div class="adm-card adm-muted">${esc(e.message)}</div>`; }
+    setInterval(() => load().catch(() => { }), 60000);   // tự làm mới mỗi phút
+  })();
+</script>
 </body>
 </html>

@@ -50,11 +50,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // --- Trang quản trị ---
                         .requestMatchers("/admin/auth/login", "/admin/login.html").permitAll()
-                        .requestMatchers("/admin/pricing/**", "/admin/staff/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/pricing/**", "/admin/staff/**", "/admin/pricing.html", "/admin/staff.html",
+                                "/admin/settings/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "STAFF")
                         // --- Phía khách và tài nguyên tĩnh: giữ nguyên như cũ ---
                         .requestMatchers("/customer/**").permitAll()
-                        .requestMatchers("/", "/error", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
+                        .requestMatchers("/", "/error", "/favicon.ico", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
@@ -66,8 +67,14 @@ public class SecurityConfig {
                                 json(res, 401, "Unauthorized", "Vui lòng đăng nhập để tiếp tục.");
                             }
                         })
-                        .accessDeniedHandler((req, res, e) ->
-                                json(res, 403, "Forbidden", "Bạn không có quyền thực hiện thao tác này."))
+                        .accessDeniedHandler((req, res, e) -> {
+                            // Nhân viên gõ thẳng địa chỉ trang chỉ dành cho ADMIN -> đưa về Tổng quan thay vì hiện JSON
+                            if (req.getRequestURI().endsWith(".html")) {
+                                res.sendRedirect("/admin/dashboard.html");
+                            } else {
+                                json(res, 403, "Forbidden", "Bạn không có quyền thực hiện thao tác này.");
+                            }
+                        })
                 )
                 .logout(l -> l
                         .logoutUrl("/admin/auth/logout")

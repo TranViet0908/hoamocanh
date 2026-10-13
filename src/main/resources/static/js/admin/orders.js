@@ -13,7 +13,9 @@
     const METHOD = { CASH: 'Tiền mặt', BANK_TRANSFER: 'Chuyển khoản', MOMO: 'MoMo' };
     const FINAL = ['COMPLETED', 'CANCELLED'];
     const VIEWS = { active: o => !FINAL.includes(o.status), PENDING: o => o.status === 'PENDING',
-        COMPLETED: o => o.status === 'COMPLETED', CANCELLED: o => o.status === 'CANCELLED', all: () => true };
+        COMPLETED: o => o.status === 'COMPLETED', CANCELLED: o => o.status === 'CANCELLED', all: () => true,
+        // Đơn đã hủy nhưng khách đã trả (một phần hoặc đủ): cần gọi điện thống nhất việc hoàn tiền
+        REFUND: o => o.status === 'CANCELLED' && !!o.paymentStatus && o.paymentStatus !== 'UNPAID' };
 
     const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="88" height="88"><rect width="100%" height="100%" fill="#f1ede4"/><text x="50%" y="62%" font-size="36" text-anchor="middle">🌸</text></svg>');
     const imgSrc = u => !u ? PLACEHOLDER : (/^(https?:|\/|data:)/.test(u) ? u : '/' + u);
@@ -33,7 +35,7 @@
       <div class="od-bar">
         <input class="adm-input" id="q" type="search" placeholder="Tìm mã đơn (MA-12), tên hoặc số điện thoại...">
         <select class="adm-input" id="view"><option value="active">Đang xử lý</option><option value="PENDING">Chờ xác nhận</option>
-          <option value="COMPLETED">Đã hoàn thành</option><option value="CANCELLED">Đã hủy</option><option value="all">Tất cả</option></select>
+          <option value="COMPLETED">Đã hoàn thành</option><option value="CANCELLED">Đã hủy</option><option value="REFUND">Hủy – cần hoàn tiền</option><option value="all">Tất cả</option></select>
       </div>
       <div class="adm-card"><table class="adm-table od-table"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Hình thức</th>
         <th>Hẹn</th><th>Cần thu</th><th>Thanh toán</th><th>Trạng thái</th></tr></thead><tbody id="rows"></tbody></table></div>
@@ -43,7 +45,8 @@
         <div class="adm-drawer-body" id="dwBody"></div>
         <div class="adm-drawer-foot" id="dwFoot" style="flex-direction:column;align-items:stretch"></div>
       </aside>`;
-    const $ = s => page.querySelector(s);
+    // Tìm trong vùng nội dung trước; nếu không thấy (vd. nút "Làm mới" nằm ở thanh tiêu đề) thì tìm toàn trang
+    const $ = s => page.querySelector(s) || document.querySelector(s);
     const qView = new URLSearchParams(location.search).get('view');   // từ link ở trang Tổng quan
     if (qView && Object.hasOwn(VIEWS, qView)) { f.view = qView; $('#view').value = qView; }
 
@@ -64,7 +67,7 @@
             <td data-label="Hẹn">${o.deliveryType === 'ONLINE' ? '—' : fmt(o.deliveryTime)}</td>
             <td data-label="Cần thu">${money(o.payable)}</td>
             <td data-label="Thanh toán">${badge(PAY[o.paymentStatus] || PAY.UNPAID)}</td>
-            <td data-label="Trạng thái">${badge(ST[o.status] || [o.status, ''])}</td></tr>`).join('')
+            <td data-label="Trạng thái">${badge(ST[o.status] || [o.status, ''])}${VIEWS.REFUND(o) ? ' <span class="adm-badge warn">Cần hoàn tiền</span>' : ''}</td></tr>`).join('')
             : '<tr><td colspan="7" class="od-empty">Không có đơn nào phù hợp.</td></tr>';
     }
 
@@ -93,9 +96,12 @@
         const o = cur, remaining = Math.max(0, o.payable - o.paid);
         $('#dwTitle').textContent = o.code;
         $('#dwBadge').innerHTML = badge(ST[o.status] || [o.status, '']) + ' ' + badge(PAY[o.paymentStatus] || PAY.UNPAID);
+        const refund = o.status === 'CANCELLED' && o.paid > 0 ? `<div class="od-sec"><h3>Cần liên hệ hoàn tiền</h3>
+            <div class="od-gift" style="background:#faefd7">Đơn đã hủy nhưng đã nhận <b>${money(o.paid)}</b>. Hãy gọi cho khách để thống nhất việc hoàn tiền:
+            <a href="tel:${esc(digits(o.phone))}">Gọi ${esc(o.phone)}</a> · <a href="https://zalo.me/${esc(digits(o.phone))}" target="_blank" rel="noopener">Nhắn Zalo</a></div></div>` : '';
         const safeGift = u => typeof u === 'string' && u.startsWith('/uploads/gift/') && !u.includes('..') ? u : null;
 
-        $('#dwBody').innerHTML = `
+        $('#dwBody').innerHTML = refund + `
           <div class="od-sec"><h3>Khách hàng</h3><div class="od-kv">
             <span>Họ tên</span><b>${esc(o.customerName)}</b>
             <span>Liên hệ</span><div><a href="tel:${esc(digits(o.phone))}">${esc(o.phone)}</a> · <a href="https://zalo.me/${esc(digits(o.phone))}" target="_blank" rel="noopener">Zalo</a></div>

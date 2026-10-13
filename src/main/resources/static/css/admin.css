@@ -1,6 +1,7 @@
 /* Mộc Anh — giao diện quản trị. Độc lập với styles.css / moc-anh.css (mọi class đều bắt đầu bằng adm-). */
 :root{--ink:#17242b;--muted:#65747a;--cream:#f1ede4;--paper:#fbfaf7;--line:#e2dfd6;--accent:#c9794e;--ok:#3f8a5f;--warn:#b7791f;--bad:#b4473f;--info:#3b6ea5;--r:12px;--shadow:0 10px 30px rgba(23,36,43,.08)}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body.adm{margin:0;background:#f6f4ee;color:var(--ink);font:14px/1.5 'Be Vietnam Pro',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .adm h1,.adm h2,.adm h3{font-family:'Playfair Display',Georgia,serif;font-weight:500;margin:0}
 .adm button,.adm input,.adm select,.adm textarea{font:inherit;color:inherit}

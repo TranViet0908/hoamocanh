@@ -83,6 +83,7 @@ public class AdminStaffService {
     }
 
     private Role role(String name) {
+        if (!STAFF_ROLES.contains(name)) throw new IllegalArgumentException("Vai trò không hợp lệ.");
         return roleRepository.findByName(name).orElseThrow(() -> new IllegalArgumentException("Vai trò không tồn tại trong hệ thống."));
     }
 

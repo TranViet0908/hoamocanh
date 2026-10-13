@@ -25,12 +25,16 @@
           <label class="adm-field" data-for="create edit">Số điện thoại (dùng để đăng nhập)<input class="adm-input" name="phone" type="tel" maxlength="11"></label>
           <label class="adm-field" data-for="create edit">Email (không bắt buộc)<input class="adm-input" name="email" type="email" maxlength="100"></label>
           <label class="adm-field" data-for="create edit">Vai trò<select class="adm-input" name="role"><option value="STAFF">Nhân viên</option><option value="ADMIN">Quản trị viên</option></select></label>
-          <label class="adm-field" data-for="create reset"><span id="pwLabel">Mật khẩu</span><input class="adm-input" name="password" type="text" autocomplete="off" maxlength="72" placeholder="Từ 8 ký tự, có cả chữ và số"></label>
+          <label class="adm-field" data-for="create reset"><span id="pwLabel">Mật khẩu</span>
+            <span style="display:flex;gap:8px"><input class="adm-input" style="flex:1" name="password" type="password" autocomplete="new-password" maxlength="72" placeholder="Từ 8 ký tự, có cả chữ và số">
+              <button type="button" class="adm-btn" id="pwToggle" style="flex:none;min-width:64px" aria-label="Hiện hoặc ẩn mật khẩu">Hiện</button></span></label>
           <p class="adm-error" id="sfErr" role="alert"></p>
         </form>
         <div class="adm-drawer-foot"><button type="button" class="adm-btn" id="dwCancel">Hủy</button><button type="submit" form="sf" class="adm-btn primary" id="dwSave">Lưu</button></div>
       </aside>`;
     const $ = s => page.querySelector(s), sf = $('#sf'), dw = $('#dw'), ov = $('#ov');
+    const setPwVisible = show => { sf.password.type = show ? 'text' : 'password'; $('#pwToggle').textContent = show ? 'Ẩn' : 'Hiện'; };
+    $('#pwToggle').onclick = () => setPwVisible(sf.password.type === 'password');
 
     function render() {
         $('#rows').innerHTML = list.map(s => `<tr data-id="${s.id}" class="${s.active ? '' : 'st-off'}">
@@ -45,7 +49,7 @@
     async function load() { list = await api('/staff'); render(); }
 
     function open(m, s) {
-        mode = m; cur = s || null; sf.reset(); $('#sfErr').textContent = '';
+        mode = m; cur = s || null; sf.reset(); setPwVisible(false); $('#sfErr').textContent = '';
         sf.querySelectorAll('[data-for]').forEach(el => el.hidden = !el.dataset.for.split(' ').includes(m));
         $('#dwTitle').textContent = { create: 'Thêm nhân viên', edit: 'Sửa nhân viên', reset: 'Đặt lại mật khẩu' }[m];
         $('#who').hidden = m !== 'reset'; if (m === 'reset') $('#who').textContent = `${s.fullName} · ${s.phone}. Hãy báo mật khẩu mới cho họ và nhắc đổi trong mục Cài đặt.`;

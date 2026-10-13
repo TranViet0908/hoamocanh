@@ -52,7 +52,12 @@
 
     // Dựng khung trang. Trả { page, user }: page là vùng nội dung để trang tự đổ dữ liệu vào.
     async function mount({ active, title, actions = '' }) {
-        const user = await api('/auth/me');
+        let user;
+        try { user = await api('/auth/me'); }
+        catch (e) {   // 401 đã tự chuyển về trang đăng nhập; các lỗi khác (máy chủ tắt, 500...) thì báo rõ thay vì để trang trắng
+            document.body.innerHTML = '<p style="padding:40px;font:15px sans-serif">' + esc(e.message) + ' <a href="/admin/login.html">Đăng nhập lại</a></p>';
+            throw e;
+        }
         const items = NAV.filter(n => !n.role || n.role === user.role);
         const given = (user.fullName || '').trim().split(/\s+/).pop() || '';   // tên gọi = chữ cuối
 
