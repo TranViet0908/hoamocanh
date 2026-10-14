@@ -1,5 +1,6 @@
 package com.hoamocanh.dto.customer;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -37,4 +38,9 @@ public class CheckoutReq {
 
     // Giỏ hoa khách tự thiết kế
     private List<DesignItemReq> items;
+    // Thiết lập bảo mật quà tặng
+    @JsonProperty("isGiftPrivate")
+    private Boolean isGiftPrivate;
+    private String giftPassword;
+    private String giftPasswordHint;
 }

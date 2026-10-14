@@ -88,6 +88,18 @@ public class Order {
     @Column(name = "delivery_time")
     private LocalDateTime deliveryTime;
 
+    @Column(name = "gift_password_hash")
+    private String giftPasswordHash;
+
+    @Column(name = "gift_password_hint")
+    private String giftPasswordHint;
+
+    @Column(name = "gift_failed_attempts")
+    private Integer giftFailedAttempts = 0;
+
+    @Column(name = "gift_lock_until")
+    private java.time.LocalDateTime giftLockUntil;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

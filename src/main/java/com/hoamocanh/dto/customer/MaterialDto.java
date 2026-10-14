@@ -12,11 +12,13 @@ public class MaterialDto {
     private Integer id;
     private Integer categoryId;
     private String categoryName;   // tên danh mục lấy từ bảng categories
-    private String designGroup;    // MỚI: MAIN|SUB|LEAF|PACKAGING|ACCESSORY|OTHER
+    private String designGroup;    // MAIN|SUB|LEAF|PACKAGING|ACCESSORY|OTHER
     private String name;
     private BigDecimal price;
     private String imageUrl;
-    private Integer stock;      // MỚI: số lượng còn trong kho
+    private Integer stock;
+    private String color;          // MỚI: mã màu Hex từ DB phục vụ mô phỏng Bước 5
+    private String unit;           // MỚI: đơn vị tính (cành, bó nhỏ, tờ, chiếc...)
 
     public static MaterialDto from(Material m) {
         return new MaterialDto(
@@ -27,6 +29,8 @@ public class MaterialDto {
                 m.getName(),
                 m.getPrice(),
                 m.getImageUrl(),
-                m.getStock());
+                m.getStock(),
+                m.getColor(),
+                m.getUnit());
     }
 }

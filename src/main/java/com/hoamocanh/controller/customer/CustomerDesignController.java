@@ -20,39 +20,34 @@ public class CustomerDesignController {
 
     private final CustomerDesignService designService;
 
-    // Trả DTO thay vì entity: tránh lỗi serialize LAZY category và không lộ version/isDeleted
-    @GetMapping("/materials")
-    public ResponseEntity<List<MaterialDto>> getMaterialsForDesign(
-            @RequestParam Integer productType,
-            @RequestParam BigDecimal budgetLevel) {
-        return ResponseEntity.ok(designService.getAvailableMaterialsForDesign(productType, budgetLevel));
-    }
-
-    // Các mức giá đang mở (tăng dần), VD [400000, 500000, 800000]
     @GetMapping("/budget-levels")
     public ResponseEntity<List<BigDecimal>> getBudgetLevels() {
         return ResponseEntity.ok(designService.getBudgetLevels());
     }
 
-    // MỚI
     @GetMapping("/limits")
-    public ResponseEntity<DesignLimitsRes> getLimits(@RequestParam BigDecimal budgetLevel) {
+    public ResponseEntity<DesignLimitsRes> getDesignLimits(@RequestParam BigDecimal budgetLevel) {
         return ResponseEntity.ok(designService.getLimits(budgetLevel));
     }
 
+    @GetMapping("/materials")
+    public ResponseEntity<List<MaterialDto>> getAvailableMaterials(
+            @RequestParam Integer productType,
+            @RequestParam BigDecimal budgetLevel) {
+        return ResponseEntity.ok(designService.getAvailableMaterialsForDesign(productType, budgetLevel));
+    }
+
     @PostMapping("/validate")
-    public ResponseEntity<Map<String, String>> validateCart(
+    public ResponseEntity<Map<String, String>> validateDesign(
             @RequestParam Integer productType,
             @RequestParam BigDecimal budgetLevel,
             @RequestBody List<DesignItemReq> items) {
 
-        // Gộp dòng trùng materialId (toMap cũ sẽ ném lỗi nếu trùng), bỏ số lượng <= 0
-        Map<Integer, Integer> itemMap = items.stream()
-                .filter(i -> i.getQuantity() != null && i.getQuantity() > 0)
+        // Chuyển List<DesignItemReq> thành Map<Integer, Integer> (materialId -> quantity)
+        Map<Integer, Integer> selectedMaterials = items.stream()
                 .collect(Collectors.toMap(DesignItemReq::getMaterialId, DesignItemReq::getQuantity, Integer::sum));
 
-        designService.validateDesignCart(productType, budgetLevel, itemMap);
-
-        return ResponseEntity.ok(Map.of("status", "success", "message", "Thiết kế hợp lệ với ngân sách"));
+        designService.validateDesignCart(productType, budgetLevel, selectedMaterials);
+        return ResponseEntity.ok(Map.of("message", "Thiết kế hợp lệ."));
     }
 }

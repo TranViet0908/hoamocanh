@@ -2,8 +2,9 @@ package com.hoamocanh.dto.customer;
 
 import java.util.List;
 
-/** Dữ liệu công khai của trang quà tặng. KHÔNG chứa số điện thoại, địa chỉ hay giá. */
 public record GiftRes(
+        boolean isLocked,         // MỚI: Cờ kiểm tra quà có bị khóa không
+        String passwordHint,      // MỚI: Gợi ý mật khẩu
         String orderCode,
         String senderName,
         String giftMessage,

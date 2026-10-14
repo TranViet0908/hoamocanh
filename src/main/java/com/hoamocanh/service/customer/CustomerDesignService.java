@@ -5,6 +5,9 @@ import com.hoamocanh.core.entity.DesignGroup;
 import com.hoamocanh.core.entity.Material;
 import com.hoamocanh.core.entity.ProductType;
 import com.hoamocanh.core.exception.BudgetExceededException;
+import com.hoamocanh.core.exception.InvalidBudgetException;
+import com.hoamocanh.core.exception.OutOfStockException;
+import com.hoamocanh.core.exception.ResourceNotFoundException;
 import com.hoamocanh.dto.customer.DesignLimitsRes;
 import com.hoamocanh.dto.customer.MaterialDto;
 import com.hoamocanh.repository.BudgetRuleRepository;
@@ -41,18 +44,23 @@ public class CustomerDesignService {
                 .collect(Collectors.toList());
     }
 
+    private BudgetRule getActiveBudgetRule(BigDecimal budgetLevel) {
+        return budgetRuleRepository.findByBudgetLevel(budgetLevel)
+                .filter(r -> !Boolean.FALSE.equals(r.getActive()))
+                .orElseThrow(() -> new InvalidBudgetException("Mức giá này hiện không còn áp dụng hoặc đã bị khóa, vui lòng chọn mức khác."));
+    }
+
     // Bước 4: nguyên liệu còn hàng, đúng loại sản phẩm -> trả DTO (có ảnh + tồn kho)
     public List<MaterialDto> getAvailableMaterialsForDesign(Integer productTypeId, BigDecimal budgetLevel) {
         ProductType type = productTypeRepository.findById(productTypeId)
-                .orElseThrow(() -> new IllegalArgumentException("Loại sản phẩm không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Loại sản phẩm không tồn tại."));
 
         if (budgetLevel.compareTo(type.getMinBudget()) < 0) {
-            throw new IllegalArgumentException("Ngân sách tối thiểu cho " + type.getName() + " là " + type.getMinBudget());
+            NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+            throw new InvalidBudgetException("Ngân sách tối thiểu cho " + type.getName() + " là " + nf.format(type.getMinBudget()) + "đ.");
         }
 
-        // Mức giá phải đang mở (nếu admin vừa khóa thì báo ngay, không đợi tới bước kiểm tra cuối)
-        budgetRuleRepository.findByBudgetLevel(budgetLevel)
-                .orElseThrow(() -> new IllegalArgumentException("Mức giá này hiện không còn áp dụng, vui lòng chọn mức khác."));
+        getActiveBudgetRule(budgetLevel);
 
         List<Integer> allowedCategoryIds = parseCategoryIds(type.getAllowedCategoryIds());
 
@@ -62,42 +70,50 @@ public class CustomerDesignService {
                 .collect(Collectors.toList());
     }
 
-    // MỚI: các mức giá đang mở, để giao diện chỉ cho khách chọn trong danh sách này
+    // Các mức giá đang mở, để giao diện chỉ cho khách chọn trong danh sách này
     public List<BigDecimal> getBudgetLevels() {
         return budgetRuleRepository.findActiveLevels();
     }
 
-    // MỚI: định mức theo mức giá, để giao diện báo "còn được chọn bao nhiêu"
+    // Định mức theo mức giá, để giao diện báo "còn được chọn bao nhiêu"
     public DesignLimitsRes getLimits(BigDecimal budgetLevel) {
-        BudgetRule r = budgetRuleRepository.findByBudgetLevel(budgetLevel)
-                .orElseThrow(() -> new IllegalArgumentException("Mức giá không hợp lệ hoặc đã bị khóa."));
+        BudgetRule r = getActiveBudgetRule(budgetLevel);
         return new DesignLimitsRes(
                 r.getMaxMainFlowers(), r.getMaxSubFlowers(), r.getMaxLeaves(),
                 r.getMaxAccessories(), r.getMaxPackaging());
     }
 
-    // MỚI: bản 3 tham số, có kiểm tra nguyên liệu thuộc loại sản phẩm.
-    // Giữ nguyên bản 2 tham số bên dưới cho code cũ (checkout).
+    // Bản 3 tham số: kiểm tra loại sản phẩm + mức giá tối thiểu + danh mục hợp lệ
     public void validateDesignCart(Integer productTypeId, BigDecimal budgetLevel, Map<Integer, Integer> selectedMaterials) {
         ProductType type = productTypeRepository.findById(productTypeId)
-                .orElseThrow(() -> new IllegalArgumentException("Loại sản phẩm không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Loại sản phẩm không tồn tại."));
+
+        if (budgetLevel.compareTo(type.getMinBudget()) < 0) {
+            NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+            throw new InvalidBudgetException("Ngân sách tối thiểu cho " + type.getName() + " là " + nf.format(type.getMinBudget()) + "đ.");
+        }
+
         Set<Integer> allowed = Set.copyOf(parseCategoryIds(type.getAllowedCategoryIds()));
 
         for (Material m : materialRepository.findAllById(selectedMaterials.keySet())) {
             if (!allowed.contains(m.getCategory().getId())) {
-                throw new IllegalArgumentException("\"" + m.getName() + "\" không dùng được cho " + type.getName() + ".");
+                throw new BudgetExceededException("\"" + m.getName() + "\" không dùng được cho " + type.getName() + ".");
             }
         }
         validateDesignCart(budgetLevel, selectedMaterials);
     }
 
+    // Bản 2 tham số: dùng chung cho cả bước thiết kế và bước checkout
     public void validateDesignCart(BigDecimal budgetLevel, Map<Integer, Integer> selectedMaterials) {
-        BudgetRule rule = budgetRuleRepository.findByBudgetLevel(budgetLevel)
-                .orElseThrow(() -> new IllegalArgumentException("Mức giá không hợp lệ hoặc đã bị khóa."));
+        if (selectedMaterials == null || selectedMaterials.isEmpty()) {
+            throw new IllegalArgumentException("Bạn chưa chọn nguyên liệu nào.");
+        }
+
+        BudgetRule rule = getActiveBudgetRule(budgetLevel);
 
         List<Material> materials = materialRepository.findAllById(selectedMaterials.keySet());
         if (materials.size() != selectedMaterials.size()) {
-            throw new IllegalArgumentException("Có nguyên liệu không còn tồn tại, vui lòng tải lại trang.");
+            throw new ResourceNotFoundException("Có nguyên liệu không còn tồn tại, vui lòng tải lại trang.");
         }
 
         Map<DesignGroup, Integer> counts = new EnumMap<>(DesignGroup.class);
@@ -105,17 +121,16 @@ public class CustomerDesignService {
 
         for (Material m : materials) {
             int qty = selectedMaterials.getOrDefault(m.getId(), 0);
+            if (qty <= 0) continue;
 
-            // Kiểm tra còn hàng
             if (Boolean.TRUE.equals(m.getIsDeleted())) {
-                throw new IllegalArgumentException("\"" + m.getName() + "\" hiện không còn bán.");
+                throw new OutOfStockException("\"" + m.getName() + "\" hiện không còn bán.");
             }
             if (qty > m.getStock()) {
-                throw new IllegalArgumentException("\"" + m.getName() + "\" chỉ còn " + m.getStock() + " trong kho.");
+                throw new OutOfStockException("\"" + m.getName() + "\" chỉ còn " + m.getStock() + " trong kho.");
             }
             total = total.add(m.getPrice().multiply(BigDecimal.valueOf(qty)));
 
-            // Nhóm lấy từ categories.design_group (chưa gán -> OTHER, không bị giới hạn)
             DesignGroup g = m.getCategory().getDesignGroup() == null ? DesignGroup.OTHER : m.getCategory().getDesignGroup();
             counts.merge(g, qty, Integer::sum);
         }
@@ -126,6 +141,11 @@ public class CustomerDesignService {
         int countPackaging = counts.getOrDefault(DesignGroup.PACKAGING, 0);
         int countAccessories = counts.getOrDefault(DesignGroup.ACCESSORY, 0);
 
+        // Bắt buộc phải có ít nhất 1 loại hoa chính (hoặc hoa phụ) trong thiết kế
+        if (countMainFlowers + countSubFlowers <= 0) {
+            throw new BudgetExceededException("Hãy chọn ít nhất một loại hoa cho thiết kế của bạn.");
+        }
+
         if (countMainFlowers > rule.getMaxMainFlowers()) {
             throw new BudgetExceededException("Bạn chỉ được chọn tối đa " + rule.getMaxMainFlowers() + " hoa chính.");
         }
@@ -133,16 +153,15 @@ public class CustomerDesignService {
             throw new BudgetExceededException("Bạn chỉ được chọn tối đa " + rule.getMaxSubFlowers() + " hoa phụ.");
         }
         if (countLeaves > rule.getMaxLeaves()) {
-            throw new BudgetExceededException("Số lượng lá trang trí vượt quá giới hạn.");
+            throw new BudgetExceededException("Số lượng lá trang trí vượt quá giới hạn (" + rule.getMaxLeaves() + ").");
         }
         if (countAccessories > rule.getMaxAccessories()) {
-            throw new BudgetExceededException("Số lượng phụ kiện vượt quá giới hạn.");
+            throw new BudgetExceededException("Số lượng phụ kiện vượt quá giới hạn (" + rule.getMaxAccessories() + ").");
         }
         if (countPackaging > rule.getMaxPackaging()) {
-            throw new BudgetExceededException("Số lượng giấy gói/hộp vượt quá giới hạn.");
+            throw new BudgetExceededException("Số lượng giấy gói/hộp vượt quá giới hạn (" + rule.getMaxPackaging() + ").");
         }
 
-        // MỚI: tổng tiền nguyên liệu không được vượt mức giá đã chọn
         if (total.compareTo(budgetLevel) > 0) {
             NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
             throw new BudgetExceededException("Tổng nguyên liệu " + nf.format(total) + "đ đang vượt ngân sách "

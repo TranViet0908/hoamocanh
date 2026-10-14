@@ -16,4 +16,5 @@ public class OrderCheckoutRes {
     private BigDecimal payableAmount; // MỚI: số tiền khách cần trả (sau giảm giá)
     private String message;
     private String qrCodeUrl;         // link trang quà tặng nếu chọn GỬI TẶNG ONLINE
+    private String giftPassword;      // MỚI: Mã mở quà (plaintext)
 }

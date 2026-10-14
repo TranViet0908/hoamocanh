@@ -39,7 +39,7 @@
         </div>
         <p class="mt-hint" id="outputHint"></p>
 
-        <form id="checkoutForm" novalidate>
+        <form id="checkoutForm" novalidate onsubmit="return false;" method="POST">
             <label>Họ và tên<input name="name" required autocomplete="name"></label>
             <label>Số điện thoại<input name="phone" type="tel" required autocomplete="tel" inputmode="tel"></label>
             <label id="fieldTime" hidden><span id="timeLabel">Thời gian</span><input name="time" type="datetime-local"></label>
@@ -53,6 +53,20 @@
                 <label>Video kèm theo <small>(không bắt buộc · mp4, webm · tối đa 40MB)</small>
                     <input type="file" id="giftVideo" accept="video/mp4,video/webm"></label>
                 <small id="giftVideoStatus" class="mt-upload"></small>
+                <!-- MỚI: Bổ sung cài đặt bảo mật -->
+                <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line);">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                        <input type="checkbox" name="isGiftPrivate" id="isGiftPrivate" checked style="width: auto;">
+                        <b style="color: var(--accent);">Bảo vệ món quà bằng mã bí mật</b>
+                    </label>
+                    <div id="giftPasswordWrap" style="margin-top: 12px;">
+                        <p class="mt-hint">Người nhận cần nhập đúng mã mới xem được lời chúc, ảnh và video. <i>(Bỏ trống hệ thống sẽ tự tạo mã 6 số)</i>.</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <label>Mã mở quà tự đặt<input name="giftPassword" placeholder="VD: 1508, cuncung..." maxlength="8"></label>
+                            <label>Gợi ý cho người nhận<input name="giftPasswordHint" placeholder="VD: Ngày mình quen nhau 🙂"></label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <label>Ghi chú cho tiệm<textarea name="note" rows="2"></textarea></label>

@@ -3,49 +3,63 @@ const escHtml = s => String(s ?? '').replace(/[&<>"']/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const $ = s => document.querySelector(s);
+    // Đã đổi $ thành getEl để tránh lỗi IDE tự động thêm gạch chéo
+    const getEl = s => document.querySelector(s);
     const code = new URLSearchParams(location.search).get('orderCode');
     let last = null;
     try { last = JSON.parse(sessionStorage.getItem('lastOrder') || 'null'); } catch (_) {}
-    // chỉ dùng dữ liệu đã lưu nếu đúng đơn đang xem
+
+    // Chỉ dùng dữ liệu đã lưu nếu đúng đơn đang xem
     if (last && code && last.orderCode !== code) last = null;
 
-    if (code) { $('#orderCode').textContent = code; $('#orderLine').hidden = false; }
+    if (code) { getEl('#orderCode').textContent = code; getEl('#orderLine').hidden = false; }
 
     const shop = await loadShopInfo();
-    renderContact($('#contact'), shop);
+    renderContact(getEl('#contact'), shop);
 
     if (!last) return;
 
     // ----- Gửi tặng online: QR + link -----
     if (last.deliveryType === 'ONLINE' && last.giftUrl) {
-        $('#giftBox').hidden = false;
-        $('#giftLink').textContent = last.giftUrl;
-        $('#openGift').href = last.giftUrl;
+        getEl('#giftBox').hidden = false;
+        getEl('#giftLink').textContent = last.giftUrl;
+        getEl('#openGift').href = last.giftUrl; // Nút "Xem trang quà" tự động trỏ link
 
         if (window.QRCode) {
-            // mức sửa lỗi H để vẫn quét được khi có logo ở giữa
-            new QRCode($('#qrCanvas'), { text: last.giftUrl, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
+            new QRCode(getEl('#qrCanvas'), { text: last.giftUrl, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
         } else {
-            $('#qrWrap').hidden = true;   // không tải được thư viện QR (mất mạng): vẫn còn link bên dưới
+            getEl('#qrWrap').hidden = true;
         }
 
-        $('#copyLink').onclick = async () => {
-            try { await navigator.clipboard.writeText(last.giftUrl); $('#copyLink').textContent = 'Đã sao chép ✓'; }
-            catch (_) { window.prompt('Sao chép link này:', last.giftUrl); }
+        let shareText = last.giftUrl;
+        if (last.giftPassword) {
+            getEl('#giftPasswordDisplay').hidden = false;
+            getEl('#giftPasswordTxt').textContent = last.giftPassword;
+            shareText = `Có một món quà từ Mộc Anh dành cho bạn!\nLink mở quà: ${last.giftUrl}\nMã bí mật: ${last.giftPassword}`;
+        }
+
+        // Sự kiện Copy cho nút "Sao chép link"
+        getEl('#copyLink').onclick = async () => {
+            try {
+                await navigator.clipboard.writeText(shareText);
+                getEl('#copyLink').textContent = 'Đã sao chép ✓';
+            } catch (_) {
+                window.prompt('Sao chép nội dung này:', shareText);
+            }
         };
+
         if (navigator.share) {
-            $('#shareLink').hidden = false;
-            $('#shareLink').onclick = () => navigator.share({ title: 'Một món quà từ Mộc Anh', url: last.giftUrl }).catch(() => {});
+            getEl('#shareLink').hidden = false;
+            getEl('#shareLink').onclick = () => navigator.share({ title: 'Một món quà từ Mộc Anh', url: last.giftUrl }).catch(() => {});
         }
     }
 
     // ----- Thanh toán -----
-    const payBox = $('#payBox'), body = $('#payBody');
+    const payBox = getEl('#payBox'), body = getEl('#payBody');
     payBox.hidden = false;
 
     if (last.paymentMethod === 'ONLINE') {
-        $('#payTitle').textContent = 'Thanh toán online';
+        getEl('#payTitle').textContent = 'Thanh toán online';
         const amount = Number(last.payableAmount || 0);
         const hasBank = shop.bankCode && shop.bankAccount;
         if (hasBank) {
@@ -66,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <p style="font-size:12px;color:var(--muted)">Nhân viên Mộc Anh sẽ liên hệ để hướng dẫn bạn thanh toán.</p>`;
         }
     } else {
-        $('#payTitle').textContent = 'Thanh toán trực tiếp';
+        getEl('#payTitle').textContent = 'Thanh toán trực tiếp';
         body.innerHTML = `<p>Số tiền cần thanh toán: <b>${money(last.payableAmount)}</b></p>
             <p style="font-size:12px;color:var(--muted)">Bạn thanh toán trực tiếp khi nhận hoa hoặc khi đến tiệm.</p>`;
     }

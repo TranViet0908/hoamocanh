@@ -12,11 +12,23 @@ const MODES = {
     DELIVERY: { hint: 'Mộc Anh kiểm tra nguyên liệu, thực hiện sản phẩm theo thiết kế rồi giao đến địa chỉ của bạn.',
                 time: true, timeLabel: 'Thời gian muốn nhận hoa', address: true, gift: false }
 };
+
 // Khớp CheckoutReq.paymentMethod: CASH | ONLINE
 const PAY_HINTS = {
     CASH: 'Bạn trả tiền trực tiếp khi nhận hoa hoặc khi đến tiệm.',
     ONLINE: 'Sau khi đặt đơn, bạn sẽ nhận hướng dẫn chuyển khoản. Đơn được xác nhận khi tiệm nhận được tiền.'
 };
+
+const FORM_LABELS = { round: 'Bó tròn', natural: 'Bó tự nhiên', long: 'Bó dài' };
+const MIX_LABELS = { 'rose-baby': 'Hồng + baby', 'rose-daisy': 'Hồng + cúc', 'tulip-baby': 'Tulip + baby' };
+
+function formatSimSummary(sim) {
+    if (!sim) return '';
+    const mix = MIX_LABELS[sim.mix] || sim.mix || '';
+    const form = FORM_LABELS[sim.form] || sim.form || '';
+    return [mix, form, sim.flowerColor ? `Hoa ${sim.flowerColor}` : '', sim.paperColor ? `Giấy ${sim.paperColor}` : '', sim.ribbonColor ? `Nơ ${sim.ribbonColor}` : '']
+        .filter(Boolean).join(' · ');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('#checkoutForm');
@@ -30,20 +42,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     const orderData = JSON.parse(raw);
+    const simSummaryText = formatSimSummary(orderData.simulation);
 
-    // 2. Tóm tắt đơn
+    // 2. Tóm tắt đơn (kèm cấu hình bản phối mô phỏng từ Bước 5)
     document.querySelector('#orderSummary').innerHTML = `
         <p><b>${esc(orderData.productTypeName || '')}</b> · ${esc([orderData.style, orderData.themeColor, orderData.occasion].filter(Boolean).join(' · '))}</p>
+        ${simSummaryText ? `<p style="font-size:12.5px;color:var(--muted);margin-top:4px"><b>Bản phối mô phỏng:</b> ${esc(simSummaryText)}</p>` : ''}
         <hr>
         ${(orderData.display || []).map(i =>
-            `<p>${esc(i.name)} × ${i.quantity} <span style="float:right">${money(i.price * i.quantity)}</span></p>`).join('')}
+            `<p>${esc(i.name)} ×${i.quantity} <span style="float:right">${money(i.price * i.quantity)}</span></p>`).join('')}
         <hr>
-        <p><b>Tạm tính</b> <b style="float:right">${money(orderData.total)}</b></p>`;
+        <p><b>Ngân sách gói</b> <b style="float:right">${money(orderData.budgetLevel || orderData.total)}</b></p>
+        <p style="font-size:12.5px;color:var(--muted)"><span>Tạm tính nguyên liệu</span> <span style="float:right">${money(orderData.total)}</span></p>`;
 
     // 3. Hình thức đầu ra -> hiện/ẩn ô nhập tương ứng
     let outputType = 'ONLINE';
     let paymentMethod = 'CASH';
-    const media = { image: null, video: null };      // URL sau khi upload
+    const media = { image: null, video: null };
     let uploading = 0;
 
     const fields = {
@@ -52,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gift: { box: form.querySelector('#fieldGift'), input: form.elements.gift }
     };
 
-    // ----- Đặt lịch đến tiệm (PICKUP): chọn ngày rồi chọn khung giờ còn chỗ. Hình thức khác vẫn dùng ô nhập giờ -----
+    // ----- Đặt lịch đến tiệm (PICKUP): chọn ngày rồi chọn khung giờ còn chỗ -----
     let picker = null;
     const pad = n => String(n).padStart(2, '0');
     const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -98,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 b.onclick = () => {
                     box.querySelectorAll('.choice').forEach(x => x.classList.remove('selected'));
                     b.classList.add('selected');
-                    fields.time.input.value = `${date}T${s.start}`;   // submit đọc giá trị này như cũ
+                    fields.time.input.value = `${date}T${s.start}`;
                 };
                 box.appendChild(b);
             });
@@ -114,13 +129,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!cfg[k]) fields[k].input.value = '';
         });
         if (!cfg.gift) resetMedia();
-        fields.time.input.required = cfg.time && mode !== 'PICKUP';   // PICKUP: chọn khung giờ, kiểm tra ở bước gửi đơn
+        fields.time.input.required = cfg.time && mode !== 'PICKUP';
         fields.address.input.required = cfg.address;
         if (cfg.time) document.querySelector('#timeLabel').textContent = cfg.timeLabel;
         togglePicker(mode === 'PICKUP');
     }
 
-    // Không cho chọn thời điểm trong quá khứ
     const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);
     fields.time.input.min = now.toISOString().slice(0, 16);
 
@@ -143,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         applyPay(btn.dataset.pay);
     });
 
-    // 5. Upload ảnh/video quà tặng (tải lên ngay khi chọn file)
+    // 5. Upload ảnh/video quà tặng
     function setStatus(kind, text, isError) {
         const el = document.querySelector(kind === 'image' ? '#giftImageStatus' : '#giftVideoStatus');
         el.textContent = text;
@@ -179,6 +193,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('#giftImage').onchange = e => upload('image', e.target.files[0]);
     document.querySelector('#giftVideo').onchange = e => upload('video', e.target.files[0]);
 
+    const isGiftPrivateCb = document.querySelector('#isGiftPrivate');
+    const giftPwdWrap = document.querySelector('#giftPasswordWrap');
+    if (isGiftPrivateCb && giftPwdWrap) {
+        isGiftPrivateCb.addEventListener('change', e => {
+            giftPwdWrap.style.display = e.target.checked ? 'block' : 'none';
+        });
+    }
+
     applyMode('ONLINE');
     applyPay('CASH');
 
@@ -187,33 +209,46 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         if (uploading) return showModal('Tệp đính kèm đang được tải lên, vui lòng đợi một chút.');
         const fd = new FormData(form);
-        const name = fd.get('name').trim();
-        const phone = fd.get('phone').trim();
+        const name = String(fd.get('name') || '').trim();
+        const phone = String(fd.get('phone') || '').trim();
+        const address = String(fd.get('address') || '').trim();
+        const note = String(fd.get('note') || '').trim();
+        const giftMsg = String(fd.get('gift') || '').trim();
+        const giftPwd = String(fd.get('giftPassword') || '').trim();
+        const giftHint = String(fd.get('giftPasswordHint') || '').trim();
+        const voucher = String(fd.get('voucher') || '').trim();
 
         if (!name) return showModal('Vui lòng nhập họ và tên.');
         if (!/^(0|\+84)\d{9,10}$/.test(phone.replace(/[\s.-]/g, ''))) return showModal('Số điện thoại chưa đúng định dạng.');
         if (MODES[outputType].time && !fd.get('time')) return showModal('Vui lòng chọn thời gian.');
-        if (MODES[outputType].address && !fd.get('address').trim()) return showModal('Vui lòng nhập địa chỉ nhận hàng.');
+        if (MODES[outputType].address && !address) return showModal('Vui lòng nhập địa chỉ nhận hàng.');
 
         const gift = MODES[outputType].gift;
+        const combinedNotes = [
+            orderData.occasion ? 'Mục đích tặng: ' + orderData.occasion : '',
+            simSummaryText ? 'Bản phối mô phỏng: ' + simSummaryText : '',
+            note
+        ].filter(Boolean).join('\n') || null;
+
         const payload = {
             productTypeId: orderData.productTypeId,
             budgetLevel: orderData.budgetLevel,
             style: orderData.style,
             themeColor: orderData.themeColor || null,
-            // CheckoutReq chưa có trường "mục đích tặng" riêng nên ghép vào styleNote
-            styleNote: [orderData.occasion ? 'Mục đích tặng: ' + orderData.occasion : '', fd.get('note').trim()]
-                .filter(Boolean).join('\n') || null,
+            styleNote: combinedNotes,
             deliveryType: outputType,
             paymentMethod,
             receiverName: name,
             receiverPhone: phone,
-            shippingAddress: MODES[outputType].address ? fd.get('address').trim() : null,
-            deliveryTime: MODES[outputType].time ? fd.get('time') : null,      // "2026-10-12T15:30"
-            giftMessage: gift ? (fd.get('gift').trim() || null) : null,
+            shippingAddress: MODES[outputType].address ? address : null,
+            deliveryTime: MODES[outputType].time ? fd.get('time') : null,
+            giftMessage: gift ? (giftMsg || null) : null,
             giftImageUrl: gift ? media.image : null,
             giftVideoUrl: gift ? media.video : null,
-            voucherCode: fd.get('voucher').trim() || null,
+            isGiftPrivate: gift ? Boolean(isGiftPrivateCb && isGiftPrivateCb.checked) : false,
+            giftPassword: gift ? (giftPwd || null) : null,
+            giftPasswordHint: gift ? (giftHint || null) : null,
+            voucherCode: voucher || null,
             items: orderData.items
         };
 
@@ -231,13 +266,13 @@ document.addEventListener('DOMContentLoaded', () => {
             try { data = await res.json(); } catch (_) {}
             if (!res.ok) throw new Error(data?.message || `Lỗi máy chủ (${res.status})`);
 
-            // OrderCheckoutRes: orderCode, paymentMethod, payableAmount, qrCodeUrl
             sessionStorage.setItem('lastOrder', JSON.stringify({
                 orderCode: data.orderCode,
                 deliveryType: outputType,
                 paymentMethod: data.paymentMethod,
                 payableAmount: data.payableAmount,
-                giftUrl: data.qrCodeUrl || null
+                giftUrl: data.qrCodeUrl || null,
+                giftPassword: data.giftPassword || null
             }));
             sessionStorage.removeItem('hoaOrder');
             location.href = '/customer/thankyou.html?orderCode=' + encodeURIComponent(data.orderCode);
