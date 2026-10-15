@@ -1,0 +1,119 @@
+{
+  "images": [
+    {
+      "file": "rose.jpg",
+      "original_filename": "hong-phan-can-canh-02.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "tulip.jpg",
+      "original_filename": "tulip-vang-can-canh-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "daisy.jpg",
+      "original_filename": "cuc-trang-bong-nho-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "chrysanthemum.jpg",
+      "original_filename": "cuc-trang-bong-lon-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "tana.jpg",
+      "original_filename": "cuc-tana-trang-bo-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "baby.jpg",
+      "original_filename": "baby-trang-bo-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "eucalyptus.jpg",
+      "original_filename": "la-bac-bo-03.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "cream.jpg",
+      "original_filename": "giay-be-phoi-nau-hong-2-mat-tham-khao-01.jpg",
+      "source": "https://phukiencamhoa.vn/san-pham/giay-goi-hoa-2-mat-tron/",
+      "reference_only": true,
+      "image_source": "https://phukiencamhoa.vn/wp-content/uploads/2024/03/giay-goi-hoa-2-mat-tron-4.jpg",
+      "note": "Giấy trơn hai mặt: be và nâu hồng.",
+      "license": "Chưa xác định quyền tái sử dụng; chỉ lưu tham khảo sản phẩm."
+    },
+    {
+      "file": "pink.jpg",
+      "original_filename": "giay-hong-phan-phoi-trang-2-mat-tham-khao-01.jpg",
+      "source": "https://phukiencamhoa.vn/san-pham/giay-goi-hoa-2-mat-tron/",
+      "reference_only": true,
+      "image_source": "https://phukiencamhoa.vn/wp-content/uploads/2024/03/giay-goi-hoa-2-mat-tron-15.jpg",
+      "note": "Giấy trơn hai mặt: hồng phấn và trắng.",
+      "license": "Chưa xác định quyền tái sử dụng; chỉ lưu tham khảo sản phẩm."
+    },
+    {
+      "file": "ribbon-pink.webp",
+      "original_filename": "ruy-bang-hong-tham-khao-01.webp",
+      "source": "https://phulieuhoa.vn/san-pham-ruy-bang-lua-satin-loi-xop-2-5cm-x-22m-2472",
+      "reference_only": true,
+      "image_source": "https://media.phulieuhoa.vn/product-images/5f96537f234bf10001dff345/682a9e4ab3078c9923d21272/5ecdbba46047d916b03e9f72/normal/ruy-bang-lua-satin-loi-xop-2-5cm-x-22mphulieuhoavn638907621878398026-800-800.webp",
+      "note": "Hồng phấn; chọn bằng kiểm tra ảnh.",
+      "license": "Chưa xác định quyền tái sử dụng; chỉ lưu tham khảo sản phẩm."
+    },
+    {
+      "file": "ribbon-cream.webp",
+      "original_filename": "ruy-bang-kem-tham-khao-01.webp",
+      "source": "https://phulieuhoa.vn/san-pham-ruy-bang-lua-satin-loi-xop-2-5cm-x-22m-2472",
+      "reference_only": true,
+      "image_source": "https://media.phulieuhoa.vn/product-images/5f96537f234bf10001dff345/682a9e4ab3078c9923d21272/5ecdbba46047d916b03e9f72/normal/ruy-bang-lua-satin-loi-xop-2-5cm-x-22mphulieuhoavn638907622074297979-800-800.webp",
+      "note": "Kem/be sáng; chọn bằng kiểm tra ảnh.",
+      "license": "Chưa xác định quyền tái sử dụng; chỉ lưu tham khảo sản phẩm."
+    },
+    {
+      "file": "round-pink.jpg",
+      "original_filename": "bo-tron-hong-phan-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "round-cream.jpg",
+      "original_filename": "bo-tron-hong-kem-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "natural-white.jpg",
+      "original_filename": "bo-tu-nhien-hoa-trang-la-xanh-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "natural-yellow.jpg",
+      "original_filename": "bo-tu-nhien-huong-duong-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "long-cream.jpg",
+      "original_filename": "bo-dai-hong-kem-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    },
+    {
+      "file": "long-red.jpg",
+      "original_filename": "bo-dai-hong-do-01.jpg",
+      "source": "Bộ ảnh người dùng cung cấp; nguồn gốc chưa được xác minh",
+      "reference_only": true
+    }
+  ],
+  "color_method": "Màu đại diện được hiệu chỉnh thủ công theo ảnh, không phải phép đo màu chuẩn."
+}

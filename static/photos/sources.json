@@ -1,0 +1,113 @@
+[
+  {
+    "id": "rose",
+    "file": "rose.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Pink_rose%E2%80%93IMG_6796_02.jpg",
+    "artist": "<a href=\"//commons.wikimedia.org/wiki/User:K%C4%B1z%C4%B1l\" title=\"User:Kızıl\">Kızıl</a>",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "sample_not_shop_inventory": true
+  },
+  {
+    "id": "tulip",
+    "file": "tulip.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Small_yellow_tulip.jpg",
+    "artist": "<a href=\"//commons.wikimedia.org/wiki/User:Mister_rf\" title=\"User:Mister rf\">Mister rf</a>",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "sample_not_shop_inventory": true
+  },
+  {
+    "id": "daisy",
+    "file": "daisy.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:White_Chrysanthemum_flower_in_Flowering_plant_market,_Yunusabad,_Tashkent.jpg",
+    "artist": "<a href=\"//commons.wikimedia.org/wiki/User:Umarxon_III\" title=\"User:Umarxon III\">Umarxon III</a>",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "sample_not_shop_inventory": true
+  },
+  {
+    "id": "baby",
+    "file": "baby.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Gypsophila_paniculata_sl17.jpg",
+    "artist": "<a href=\"//commons.wikimedia.org/wiki/User:Stefan.lefnaer\" title=\"User:Stefan.lefnaer\">Stefan.lefnaer</a>",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "sample_not_shop_inventory": true
+  },
+  {
+    "id": "eucalyptus",
+    "file": "eucalyptus.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Eucalyptus_cinerea_leaves.jpg",
+    "artist": "<a href=\"//commons.wikimedia.org/wiki/User:Gderrin\" title=\"User:Gderrin\">Geoff Derrin</a>",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "sample_not_shop_inventory": true
+  },
+  {
+    "id": "basket",
+    "file": "basket.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Wicker_basket_-_Slovakia_(1).jpg",
+    "artist": "<a href=\"//commons.wikimedia.org/wiki/User:Luppus\" class=\"mw-redirect\" title=\"User:Luppus\">Ladislav Luppa</a>",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "sample_not_shop_inventory": true,
+    "modifications": "Sample-specific crop/mask in compositor; paper texture for cone, no complete product promised."
+  },
+  {
+    "id": "pink",
+    "file": "pink.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Wrapping_tissue_flowers_(cropped).jpg",
+    "artist": "Kelly Hunter",
+    "license": "CC BY 2.0",
+    "license_url": "https://creativecommons.org/licenses/by/2.0",
+    "sample_not_shop_inventory": true
+  },
+  {
+    "id": "ribbon",
+    "file": "ribbon.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Open_Pink_Gifft_Box_with_White_Ribbon.JPG",
+    "artist": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Jpquidores&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Jpquidores (page does not exist)\">Jpquidores</a>",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sample_not_shop_inventory": true
+  },
+  {
+    "id": "stand",
+    "file": "stand.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Foldable_table_easel_in_Tuntorp_1.jpg",
+    "artist": "<a href=\"//commons.wikimedia.org/wiki/User:W.carter\" title=\"User:W.carter\">W.carter</a>",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "sample_not_shop_inventory": true
+  },
+  {
+    "id": "cream",
+    "file": "cream.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Paper-wrapped_bouquet_(Unsplash).jpg",
+    "artist": "Lizzie <a rel=\"nofollow\" class=\"external text\" href=\"https://unsplash.com/@amianyuhua\">amianyuhua</a>",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "sample_not_shop_inventory": true,
+    "modifications": "Sample-specific crop/mask in compositor; paper texture for cone, no complete product promised."
+  },
+  {
+    "id": "box",
+    "file": "box.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Open_Pink_Gifft_Box_with_White_Ribbon.JPG",
+    "artist": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Jpquidores&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Jpquidores (page does not exist)\">Jpquidores</a>",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sample_not_shop_inventory": true
+  },
+  {
+    "id": "bag",
+    "file": "bag.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:White_paper_bag_on_white_and_black_background.jpg",
+    "artist": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/31437555@N00\">Jeffrey Beall</a> from Denver, Colorado, USA",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "sample_not_shop_inventory": true,
+    "modifications": "Sample-specific crop/mask in compositor; paper texture for cone, no complete product promised."
+  }
+]

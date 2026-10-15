@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/moc-anh.css?v=20261016">
+    <link rel="stylesheet" href="/css/moc-anh.css?v=20261017">
 </head>
 <body class="page-design">
 <a class="skip-link" href="#main-content">Bỏ qua đến nội dung</a>
@@ -147,144 +147,17 @@
             </div>
         </section>
 
-        <!-- Bước 5 -->
+        <!-- Bước 5: TOÀN BỘ HTML CỦA BẠN CÙNG NHÓM (/static/index.html) -->
         <section class="step" data-step="5">
-            <p class="kicker">05 / Hình dung</p>
-            <h3>Những gì bạn chọn,<br>khi <i>đặt cạnh nhau</i></h3>
+            <iframe
+                    id="colleagueFullHtmlFrame"
+                    data-src="/static/index.html"
+                    title="Mô phỏng & Kết hợp mẫu hoa Mộc Anh"
+                    scrolling="no"
+                    style="width:100%;height:520px;border:0;display:block;border-radius:20px;overflow:hidden;background:transparent">
+            </iframe>
 
-            <!-- STUDIO MÔ PHỎNG ĐỘNG THEO SẢN PHẨM, SỐ LƯỢNG & CATEGORY -->
-            <div class="sim-studio" id="simStudio">
-                <div class="sim-preview-card">
-                    <div class="sim-head">
-                        <div>
-                            <strong id="simProductTitle">Ảnh xem trước</strong>
-                            <small id="simQtySummary" style="display:block;font-size:12px;color:var(--muted)"></small>
-                        </div>
-                        <div class="sim-mode-Switch" id="simModeSwitch">
-                            <button type="button" class="mt-chip active" data-mode="photo" id="simPhotoModeBtn">Ảnh chụp Studio</button>
-                            <button type="button" class="mt-chip" data-mode="dynamic">Moodboard ảnh thật</button>
-                        </div>
-                    </div>
-
-                    <div class="sim-canvas-wrap">
-                        <canvas id="simCanvas" width="600" height="600" aria-label="Ảnh mô phỏng sản phẩm hoa"></canvas>
-                        <div class="sim-empty" id="simEmpty" hidden>Chưa có ảnh mẫu cho kiểu dáng này, hãy chuyển sang chế độ "Theo số lượng" hoặc chọn dáng khác.</div>
-                    </div>
-
-                    <!-- Thanh tỷ lệ diện tích màu sắc thực tế từ giỏ hàng (palette-render) -->
-                    <div class="sim-palette-wrap">
-                        <div class="sim-palette-bar" id="simPaletteBar"></div>
-                        <div class="sim-swatches" id="simSwatches"></div>
-                    </div>
-
-                    <div class="sim-toolbar">
-                        <button type="button" class="button button-light sim-btn-sm" id="simResetBtn">Khôi phục theo giỏ hàng</button>
-                        <button type="button" class="button button-light sim-btn-sm" id="simDownloadBtn">Tải ảnh xem trước</button>
-                        <span class="sim-caption" id="simCaption"></span>
-                    </div>
-                </div>
-
-                <div class="sim-controls-card">
-                    <h4>Chỉnh bản phối</h4>
-                    <p class="sim-context-note" id="simContextNote"></p>
-
-                    <label class="sim-field" id="fieldSimMix">
-                        <span id="labelSimMix">00 · Tổ hợp hoa trong giỏ</span>
-                        <select id="simMixSelect"></select>
-                    </label>
-
-                    <label class="sim-field" id="fieldSimForm">
-                        <span id="labelSimForm">01 · Chọn kiểu dáng</span>
-                        <select id="simFormSelect"></select>
-                    </label>
-
-                    <div class="sim-field">
-                        <span>02 · Phối sắc độ theo nguyên liệu đã chọn</span>
-                        <small id="simFixedNote">Các nhóm không chọn ở Bước 4 sẽ tự động ẩn hoặc giữ nguyên mặc định.</small>
-                        <div class="sim-presets" id="simPresets">
-                            <button type="button" class="mt-chip active" data-preset="cart">Màu gốc giỏ hàng</button>
-                            <button type="button" class="mt-chip" data-preset="blush-beige">Hồng dịu - be</button>
-                            <button type="button" class="mt-chip" data-preset="cream-brown">Kem - nâu</button>
-                            <button type="button" class="mt-chip" data-preset="lilac-white">Tím nhạt - trắng</button>
-                        </div>
-                    </div>
-
-                    <label class="sim-field" id="fieldMainColor">
-                        <span id="labelMainColor">Màu hoa chính</span>
-                        <select id="simFlowerColor">
-                            <option value="#b92042">Đỏ Ecuador</option>
-                            <option value="#e4b7c1">Hồng phấn Pastel</option>
-                            <option value="#edc365">Vàng rực rỡ</option>
-                            <option value="#e7a2a0">Hồng đào Cẩm chướng</option>
-                            <option value="#c5a0c4">Tím Lavender / Tulip</option>
-                            <option value="#eadfcf">Trắng kem</option>
-                        </select>
-                    </label>
-
-                    <label class="sim-field" id="fieldSubColor">
-                        <span id="labelSubColor">Màu hoa phụ</span>
-                        <select id="simSubColor">
-                            <option value="#fffef6">Trắng tinh khôi (Baby)</option>
-                            <option value="#f4efd7">Trắng nhụy vàng (Cúc Tana)</option>
-                            <option value="#ad77bb">Tím mộng mơ (Thạch thảo)</option>
-                            <option value="#e4b7c1">Hồng nhạt</option>
-                        </select>
-                    </label>
-
-                    <label class="sim-field" id="fieldPackColor">
-                        <span id="labelPackColor">Màu bao bì / giấy gói</span>
-                        <select id="simPaperColor">
-                            <option value="#ddc5a7">Nâu Kraft / Mây tự nhiên</option>
-                            <option value="#f3eee6">Trắng ngà / Kính mờ</option>
-                            <option value="#e8c7ce">Hồng phấn</option>
-                            <option value="#c9a99a">Nâu hồng</option>
-                            <option value="#bfa079">Vàng mây đan</option>
-                        </select>
-                    </label>
-
-                    <label class="sim-field" id="fieldRibbonColor">
-                        <span id="labelRibbonColor">Màu phụ kiện / ruy băng</span>
-                        <select id="simRibbonColor">
-                            <option value="#e6b2c2">Hồng phấn</option>
-                            <option value="#a8384b">Đỏ lụa</option>
-                            <option value="#eadfcf">Kem sáng</option>
-                            <option value="#9ab3a4">Xanh sage</option>
-                            <option value="none">Không dùng nơ</option>
-                        </select>
-                    </label>
-
-                    <div class="sim-ab-actions">
-                        <button type="button" class="button button-light sim-btn-sm" id="saveSlotA">Giữ phương án A</button>
-                        <button type="button" class="button button-light sim-btn-sm" id="saveSlotB">Giữ phương án B</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- KHUNG SO SÁNH A/B (CÓ NÚT KHÔI PHỤC LẠI PHƯƠNG ÁN) -->
-            <div class="sim-compare" id="simCompare" hidden>
-                <h4>So sánh A/B</h4>
-                <div class="sim-compare-grid">
-                    <figure class="sim-slot" id="slotACard">
-                        <img id="slotAImg" alt="Phương án A">
-                        <figcaption id="slotAText">Chưa lưu phương án A</figcaption>
-                        <button type="button" class="button button-light sim-btn-sm" id="restoreSlotA" hidden style="margin-top:8px;width:100%">Mở lại phương án A</button>
-                    </figure>
-                    <figure class="sim-slot" id="slotBCard">
-                        <img id="slotBImg" alt="Phương án B">
-                        <figcaption id="slotBText">Chưa lưu phương án B</figcaption>
-                        <button type="button" class="button button-light sim-btn-sm" id="restoreSlotB" hidden style="margin-top:8px;width:100%">Mở lại phương án B</button>
-                    </figure>
-                </div>
-            </div>
-
-            <!-- MOODBOARD NGUYÊN LIỆU ĐÃ CHỌN -->
-            <div class="moodboard">
-                <div class="mt-collage" id="collage" hidden></div>
-                <img id="moodFallback" src="https://images.unsplash.com/photo-1527061011665-3652c757a4d4?auto=format&fit=crop&w=1000&q=85" alt="Moodboard hoa tươi">
-                <div class="mood-note"><span id="moodItems"></span><br>Hình ảnh chỉ mang tính mô phỏng. Sản phẩm thực tế có thể thay đổi theo đặc tính và nguồn hoa tươi trong ngày.</div>
-            </div>
-            <div id="designSummary"></div>
-            <div class="step-actions">
+            <div class="step-actions" style="margin-top:12px">
                 <button type="button" class="button button-light prev-step">← Quay lại</button>
                 <button type="button" class="button button-dark next-step">Chốt đơn →</button>
             </div>
@@ -305,21 +178,20 @@
     </div>
 </main>
 
-<script src="/js/customer/modal.js?v=20261016"></script>
-<script src="/js/customer/design.js?v=20261016"></script>
-<!-- Chỉ phục vụ giao diện (không đụng tới logic): tô sáng thanh tiến trình & gắn icon cho loại sản phẩm -->
+<script src="/js/customer/modal.js?v=20261017"></script>
+<script src="/js/customer/design.js?v=20261017"></script>
 <script>
     (function () {
         var items = document.querySelectorAll('#stepper li');
         function syncStepper() {
-            var act = document.querySelector('.step.active');
+            var act = document.querySelector('section.step.active');
             var n = act ? +act.getAttribute('data-step') : 1;
             items.forEach(function (li, i) {
                 li.classList.toggle('is-active', i + 1 === n);
                 li.classList.toggle('is-done', i + 1 < n);
             });
         }
-        document.querySelectorAll('.step').forEach(function (s) {
+        document.querySelectorAll('section.step').forEach(function (s) {
             new MutationObserver(syncStepper).observe(s, { attributes: true, attributeFilter: ['class'] });
         });
         syncStepper();
@@ -344,6 +216,57 @@
         }
         new MutationObserver(tag).observe(grid, { childList: true });
         tag();
+
+        // ===== Iframe bước 5: ẩn phần thừa + tự co giãn chiều cao theo nội dung =====
+        var frame = document.getElementById('colleagueFullHtmlFrame');
+        if (frame) {
+            var FRAME_GAP = 8;   // khoảng đệm dưới phần mô phỏng (px) - chỉnh số này nếu cần
+            var EMBED_CSS =
+                'body>header,main>.intro,main>footer,.request-history,#shop-step-4,#to-request,' +
+                '.shop-flow button[data-step="4"]{display:none!important}' +
+                'html,body{height:auto!important;min-height:0!important;background:transparent!important}' +
+                'main{min-height:0!important;padding-top:0!important;padding-bottom:0!important;margin-bottom:0!important}';
+
+            function frameDoc() {
+                try { return frame.contentDocument || frame.contentWindow.document; } catch (_) { return null; }
+            }
+            function injectEmbedCss(doc) {
+                if (!doc || !doc.head || doc.getElementById('moc-embed-style')) return;
+                var st = doc.createElement('style');
+                st.id = 'moc-embed-style';
+                st.textContent = EMBED_CSS;
+                doc.head.appendChild(st);
+            }
+            function syncHeight() {
+                try {
+                    var doc = frameDoc(), win = frame.contentWindow;
+                    var m = doc && doc.querySelector('main');
+                    if (!m) return;
+                    injectEmbedCss(doc);
+                    var bottom = 0;
+                    Array.prototype.forEach.call(m.children, function (el) {
+                        if (el.hidden || win.getComputedStyle(el).display === 'none') return;
+                        bottom = Math.max(bottom, el.getBoundingClientRect().bottom);
+                    });
+                    if (bottom > 100) {
+                        var h = Math.ceil(bottom + (win.scrollY || 0) + FRAME_GAP);
+                        if (Math.abs(h - frame.offsetHeight) > 1) frame.style.height = h + 'px';
+                    }
+                } catch (_) {}
+            }
+            var heightTimer = null;
+            frame.addEventListener('load', function () {
+                injectEmbedCss(frameDoc());
+                syncHeight();
+                // Đo định kỳ trong lúc trang mô phỏng đang tải catalog / đổi bước / tạo ảnh
+                clearInterval(heightTimer);
+                heightTimer = setInterval(function () {
+                    var act = document.querySelector('section.step.active');
+                    if (act && act.getAttribute('data-step') === '5') syncHeight();
+                }, 250);
+            });
+            window.addEventListener('resize', syncHeight);
+        }
     })();
 </script>
 </body>

@@ -1,0 +1,52 @@
+{
+  "templates": [
+    {
+      "id": "round-pink",
+      "form": "round",
+      "name": "Bó tròn hồng phấn",
+      "description": "Mặt hoa tròn, giấy hồng nhẹ.",
+      "photo_url": "/static/curated/round-pink.jpg",
+      "reference_only": true
+    },
+    {
+      "id": "round-cream",
+      "form": "round",
+      "name": "Bó tròn hồng kem",
+      "description": "Mặt hoa tròn, giấy trắng.",
+      "photo_url": "/static/curated/round-cream.jpg",
+      "reference_only": true
+    },
+    {
+      "id": "natural-white",
+      "form": "natural",
+      "name": "Bó tự nhiên trắng xanh",
+      "description": "Bố cục thoáng, hoa trắng xen lá.",
+      "photo_url": "/static/curated/natural-white.jpg",
+      "reference_only": true
+    },
+    {
+      "id": "natural-yellow",
+      "form": "natural",
+      "name": "Bó tự nhiên hướng dương",
+      "description": "Bố cục tham khảo với hoa vàng, giấy kraft.",
+      "photo_url": "/static/curated/natural-yellow.jpg",
+      "reference_only": true
+    },
+    {
+      "id": "long-cream",
+      "form": "long",
+      "name": "Bó dài hồng kem",
+      "description": "Dáng cao, giấy be hồng.",
+      "photo_url": "/static/curated/long-cream.jpg",
+      "reference_only": true
+    },
+    {
+      "id": "long-red",
+      "form": "long",
+      "name": "Bó dài hồng đỏ",
+      "description": "Dáng cao, giấy tối màu.",
+      "photo_url": "/static/curated/long-red.jpg",
+      "reference_only": true
+    }
+  ]
+}

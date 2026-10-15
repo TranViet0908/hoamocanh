@@ -462,38 +462,101 @@ button.mt-chip.over.active{background:var(--rose-deep);border-color:var(--rose-d
 }
 
 /* =====================================================================
-   BƯỚC 5: STUDIO MÔ PHỎNG ĐA CHẾ ĐỘ & SO SÁNH A/B
+   BƯỚC 5: STYLE NGUYÊN BẢN TỪ static/style.css CỦA BẠN CÙNG NHÓM
    ===================================================================== */
-.sim-studio{display:grid;gap:16px;margin-bottom:22px}
-.sim-preview-card,.sim-controls-card,.sim-compare{background:#fff;border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow-sm)}
-.sim-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
-.sim-head strong{font:500 20px var(--serif)}
-.sim-mode-Switch{display:flex;gap:6px}
-.sim-canvas-wrap{position:relative;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:#f4efe6;display:grid;place-items:center;border:1px solid var(--line)}
-.sim-canvas-wrap canvas{width:100%;height:100%;object-fit:contain;display:block}
-.sim-empty{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;background:rgba(253,250,245,.94);color:var(--muted);font-size:14px}
-.sim-palette-wrap{margin-top:12px;padding:10px 12px;background:var(--paper);border:1px solid var(--line);border-radius:14px}
-.sim-palette-bar{height:10px;border-radius:999px;overflow:hidden;display:flex;background:var(--line);margin-bottom:8px}
-.sim-palette-bar span{height:100%;transition:width .3s ease}
-.sim-swatches{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11.5px;color:var(--muted)}
-.sim-swatches span{display:inline-flex;align-items:center;gap:5px}
-.sim-swatches i{width:11px;height:11px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.12)}
-.sim-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;flex-wrap:wrap}
-.sim-btn-sm{min-height:36px;padding:0 14px;font-size:12px}
-.sim-caption{font-size:12px;color:var(--muted);margin-left:auto}
-.sim-controls-card h4,.sim-compare h4{font:500 22px var(--serif);margin:0 0 8px}
-.sim-context-note{font-size:12px;color:var(--moss);background:var(--mist);padding:8px 12px;border-radius:12px;margin-bottom:14px;line-height:1.5}
-.sim-field{display:grid;gap:6px;margin-bottom:14px;font-size:13px}
-.sim-field{display:grid;gap:6px;margin-bottom:14px;font-size:13px;min-width:0}
-.sim-field select{width:100%;max-width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px 12px;font:inherit;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sim-field select:disabled{background:var(--cream);opacity:.75;cursor:not-allowed}
-.sim-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.sim-ab-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.sim-compare{margin-bottom:22px}
-.sim-compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.sim-slot{margin:0;border:1px solid var(--line);border-radius:16px;padding:10px;background:var(--paper)}
-.sim-slot img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;display:block;background:#f4efe6}
-.sim-slot figcaption{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.45}
-@media(min-width:760px){
-  .sim-studio{grid-template-columns:1.1fr .9fr;align-items:start}
+#mocanh-photo-preview {
+  --bg: #f7f4ed;
+  --paper: #fffdf8;
+  --green: #304f42;
+  --ink: #283c32;
+  --muted: #7a8174;
+  --line: #e6e5dc;
+  --rose: #bb7f83;
+  color: var(--ink);
+  font: 15px/1.55 system-ui, -apple-system, Segoe UI, sans-serif;
+}
+#mocanh-photo-preview .panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 26px;
+}
+#mocanh-photo-preview .section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+#mocanh-photo-preview .section-title h2 {
+  font-size: 18px;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+  margin: 0;
+}
+#mocanh-photo-preview .section-title .step {
+  display: grid !important;
+  place-items: center;
+  font-size: 11px;
+  color: var(--green);
+  background: #ecf0e8;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+}
+#mocanh-photo-preview label {
+  font-size: 12px;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 15px;
+}
+#mocanh-photo-preview select {
+  width: 100%;
+  font: 14px system-ui;
+  color: var(--ink);
+  border: 1px solid #dedfd5;
+  background: #fffefb;
+  padding: 11px 12px;
+  border-radius: 9px;
+  margin-top: 7px;
+}
+#mocanh-photo-preview select:focus {
+  outline: 2px solid #a8b9a3;
+  outline-offset: 1px;
+}
+#mocanh-photo-preview .secondary {
+  cursor: pointer;
+  font: 13px system-ui;
+  border-radius: 10px;
+  padding: 13px 17px;
+  transition: background .15s;
+  background: transparent;
+  color: var(--green);
+  border: 1px solid #d8dfd2;
+}
+#mocanh-photo-preview .secondary:hover:not(:disabled) {
+  background: #edf1e8;
+}
+#mocanh-photo-preview button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+#mocanh-photo-preview .fine {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+#mocanh-photo-preview .status {
+  font-size: 12px;
+  margin: 16px 0;
+  color: var(--muted);
+}
+#mocanh-photo-preview .actions {
+  display: flex;
+  gap: 10px;
+}
+#mocanh-photo-preview .actions button {
+  flex: 1;
+}
+.flow-shell:has(section.step.active[data-step="5"]) {
+  max-width: 1240px;
 }

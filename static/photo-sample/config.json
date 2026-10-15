@@ -1,0 +1,11 @@
+{
+ "image":"/static/photo-sample/round-rose-blush-v1.png",
+ "source":"AI generated once using built-in imagegen; browser color changes do not invoke AI",
+ "generated_elapsed_ms":22745,
+ "base_colors":{"flower":"#e4b7c1","paper":"#ddc5a7","ribbon":"#e6b2c2"},
+ "regions":{
+  "flower":{"cx":0.5,"cy":0.34,"rx":0.37,"ry":0.28},
+  "paper":{"top":0.055,"bottom":0.99,"left":0.075,"right":0.93},
+  "ribbon":{"top":0.625,"bottom":0.92,"left":0.31,"right":0.69}
+ }
+}

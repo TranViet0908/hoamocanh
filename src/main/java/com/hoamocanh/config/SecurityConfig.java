@@ -27,7 +27,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Spring tự ghép StaffUserDetailsService + PasswordEncoder ở trên thành bộ xác thực
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
         return cfg.getAuthenticationManager();
@@ -42,9 +41,9 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http, UserRepository userRepository) throws Exception {
         http
                 .cors(Customizer.withDefaults())
-                // Phiên đăng nhập dùng cookie HttpOnly + SameSite=Lax (xem application.properties) và CORS
-                // không cho gửi cookie chéo site, nên có thể tắt CSRF token cho API JSON.
                 .csrf(csrf -> csrf.disable())
+                // Cho phép nhúng trang cùng origin vào <iframe> (bước 5 của design.html)
+                .headers(h -> h.frameOptions(f -> f.sameOrigin()))
                 .securityContext(sc -> sc.securityContextRepository(securityContextRepository()))
                 .addFilterAfter(new ActiveStaffFilter(userRepository), SecurityContextHolderFilter.class)
                 .authorizeHttpRequests(auth -> auth
@@ -53,13 +52,13 @@ public class SecurityConfig {
                         .requestMatchers("/admin/pricing/**", "/admin/staff/**", "/admin/pricing.html", "/admin/staff.html",
                                 "/admin/settings/**").hasRole("ADMIN")
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "STAFF")
-                        // --- Phía khách và tài nguyên tĩnh: giữ nguyên như cũ ---
+                        // --- Phía khách, tài nguyên tĩnh và toàn bộ module mô phỏng vn.mocanh.studio ---
                         .requestMatchers("/customer/**").permitAll()
+                        .requestMatchers("/static/**", "/api/v1/**", "/gift/**", "/openapi.json", "/docs", "/studio").permitAll()
                         .requestMatchers("/", "/error", "/favicon.ico", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
-                        // Mở trang .html khi chưa đăng nhập -> chuyển về login; gọi API -> 401 JSON
                         .authenticationEntryPoint((req, res, e) -> {
                             if (req.getRequestURI().endsWith(".html")) {
                                 res.sendRedirect("/admin/login.html");
@@ -68,7 +67,6 @@ public class SecurityConfig {
                             }
                         })
                         .accessDeniedHandler((req, res, e) -> {
-                            // Nhân viên gõ thẳng địa chỉ trang chỉ dành cho ADMIN -> đưa về Tổng quan thay vì hiện JSON
                             if (req.getRequestURI().endsWith(".html")) {
                                 res.sendRedirect("/admin/dashboard.html");
                             } else {

@@ -1,0 +1,253 @@
+{
+  "PRODUCTS": {
+    "mix": [
+      "Set mix thả bình",
+      "loose cut-flower stems ready for arranging in a vase",
+      400000
+    ],
+    "bouquet": [
+      "Bó hoa",
+      "a hand-tied flower bouquet",
+      400000
+    ],
+    "basket": [
+      "Giỏ hoa",
+      "a flower arrangement inside a woven basket",
+      500000
+    ],
+    "box": [
+      "Box hoa",
+      "a flower arrangement inside a decorative flower box",
+      400000
+    ],
+    "bag": [
+      "Túi hoa",
+      "flowers arranged inside a floral gift bag",
+      400000
+    ],
+    "stand": [
+      "Kệ hoa",
+      "a full-height congratulatory flower stand",
+      900000
+    ]
+  },
+  "MATERIALS": [
+    {
+      "id": "rose",
+      "name": "Hồng phấn",
+      "en": "pink roses",
+      "color": "#e4b7c1",
+      "price": 35000,
+      "stock": 80,
+      "kind": "flower",
+      "photo_url": "/static/curated/rose.jpg"
+    },
+    {
+      "id": "tulip",
+      "name": "Tulip vàng",
+      "en": "yellow tulips",
+      "color": "#ead127",
+      "price": 45000,
+      "stock": 30,
+      "kind": "flower",
+      "photo_url": "/static/curated/tulip.jpg"
+    },
+    {
+      "id": "daisy",
+      "name": "Cúc trắng bông nhỏ",
+      "en": "white chrysanthemums",
+      "color": "#f4f1df",
+      "price": 20000,
+      "stock": 60,
+      "kind": "flower",
+      "photo_url": "/static/curated/daisy.jpg"
+    },
+    {
+      "id": "baby",
+      "name": "Baby trắng",
+      "en": "white baby’s breath",
+      "color": "#ede8db",
+      "price": 25000,
+      "stock": 50,
+      "kind": "flower",
+      "photo_url": "/static/curated/baby.jpg"
+    },
+    {
+      "id": "eucalyptus",
+      "name": "Lá bạc",
+      "en": "eucalyptus leaves",
+      "color": "#82958e",
+      "price": 15000,
+      "stock": 50,
+      "kind": "leaf",
+      "photo_url": "/static/curated/eucalyptus.jpg"
+    },
+    {
+      "id": "orchid",
+      "name": "Lan tím",
+      "en": "purple orchids",
+      "color": "#ad77bb",
+      "price": 50000,
+      "stock": 0,
+      "kind": "flower"
+    },
+    {
+      "id": "chrysanthemum",
+      "name": "Cúc trắng bông lớn",
+      "en": "large white chrysanthemums",
+      "color": "#f3eee6",
+      "price": 20000,
+      "stock": 30,
+      "kind": "flower",
+      "photo_url": "/static/curated/chrysanthemum.jpg"
+    },
+    {
+      "id": "tana",
+      "name": "Cúc tana trắng",
+      "en": "small white tana daisies",
+      "color": "#f4efd7",
+      "price": 20000,
+      "stock": 30,
+      "kind": "flower",
+      "photo_url": "/static/curated/tana.jpg"
+    }
+  ],
+  "PACKAGING": {
+    "cream": [
+      "Giấy be sáng (ảnh mẫu)",
+      "light beige wrapping paper",
+      35000,
+      [
+        "bouquet",
+        "mix"
+      ]
+    ],
+    "pink": [
+      "Giấy hồng",
+      "dusty pink wrapping paper",
+      35000,
+      [
+        "bouquet",
+        "mix"
+      ]
+    ],
+    "basket": [
+      "Giỏ mây",
+      "a natural woven basket",
+      80000,
+      [
+        "basket"
+      ]
+    ],
+    "box": [
+      "Hộp hồng (ảnh mẫu)",
+      "a pink flower box",
+      65000,
+      [
+        "box"
+      ]
+    ],
+    "bag": [
+      "Túi giấy (ảnh mẫu)",
+      "a paper gift bag",
+      50000,
+      [
+        "bag"
+      ]
+    ],
+    "stand": [
+      "Khung kệ",
+      "a minimal flower stand",
+      150000,
+      [
+        "stand"
+      ]
+    ]
+  },
+  "STYLES": {
+    "romantic": "romantic and delicate",
+    "minimal": "minimal and airy",
+    "natural": "natural and organic",
+    "luxury": "elegant and luxurious",
+    "bright": "bright and celebratory"
+  },
+  "TONES": {
+    "pink-white": "soft pink and white",
+    "yellow-white": "yellow and white",
+    "pastel": "soft pastel",
+    "mixed": "the natural colors of the selected flowers"
+  },
+  "RIBBONS": {
+    "pink": "pink satin ribbon",
+    "cream": "cream satin ribbon",
+    "none": "no ribbon"
+  },
+  "OCCASIONS": {
+    "birthday": "birthday",
+    "love": "romantic gift",
+    "thanks": "thank-you gift",
+    "celebration": "congratulations"
+  },
+  "ASSETS": {
+    "materials": {
+      "rose": {
+        "name": "Hồng phấn",
+        "color": "#e4b7c1",
+        "photo_url": "/static/curated/rose.jpg"
+      },
+      "tulip": {
+        "color": "#ead127",
+        "photo_url": "/static/curated/tulip.jpg"
+      },
+      "daisy": {
+        "name": "Cúc trắng bông nhỏ",
+        "color": "#f4f1df",
+        "photo_url": "/static/curated/daisy.jpg"
+      },
+      "chrysanthemum": {
+        "color": "#f3eee6",
+        "photo_url": "/static/curated/chrysanthemum.jpg"
+      },
+      "tana": {
+        "color": "#f4efd7",
+        "photo_url": "/static/curated/tana.jpg"
+      },
+      "baby": {
+        "color": "#ede8db",
+        "photo_url": "/static/curated/baby.jpg"
+      },
+      "eucalyptus": {
+        "color": "#82958e",
+        "photo_url": "/static/curated/eucalyptus.jpg"
+      }
+    },
+    "packaging": {
+      "cream": {
+        "name": "Giấy be / nâu hồng · hai mặt",
+        "color": "#ddc5a7",
+        "secondary_color": "#956b72",
+        "photo_url": "/static/curated/cream.jpg"
+      },
+      "pink": {
+        "name": "Giấy hồng phấn / trắng · hai mặt",
+        "color": "#e6bac0",
+        "secondary_color": "#f1e9e9",
+        "photo_url": "/static/curated/pink.jpg"
+      }
+    },
+    "ribbons": [
+      {
+        "id": "pink",
+        "name": "Ruy băng hồng phấn",
+        "color": "#e6b2c2",
+        "photo_url": "/static/curated/ribbon-pink.webp"
+      },
+      {
+        "id": "cream",
+        "name": "Ruy băng kem",
+        "color": "#deccb6",
+        "photo_url": "/static/curated/ribbon-cream.webp"
+      }
+    ]
+  }
+}

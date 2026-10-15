@@ -1,0 +1,19 @@
+{
+  "materials": {
+    "rose": {"name":"Hồng phấn", "color":"#e4b7c1", "photo_url":"/static/curated/rose.jpg"},
+    "tulip": {"color":"#ead127", "photo_url":"/static/curated/tulip.jpg"},
+    "daisy": {"name":"Cúc trắng bông nhỏ", "color":"#f4f1df", "photo_url":"/static/curated/daisy.jpg"},
+    "chrysanthemum": {"color":"#f3eee6", "photo_url":"/static/curated/chrysanthemum.jpg"},
+    "tana": {"color":"#f4efd7", "photo_url":"/static/curated/tana.jpg"},
+    "baby": {"color":"#ede8db", "photo_url":"/static/curated/baby.jpg"},
+    "eucalyptus": {"color":"#82958e", "photo_url":"/static/curated/eucalyptus.jpg"}
+  },
+  "packaging": {
+    "cream": {"name":"Giấy be / nâu hồng · hai mặt", "color":"#ddc5a7", "secondary_color":"#956b72", "photo_url":"/static/curated/cream.jpg"},
+    "pink": {"name":"Giấy hồng phấn / trắng · hai mặt", "color":"#e6bac0", "secondary_color":"#f1e9e9", "photo_url":"/static/curated/pink.jpg"}
+  },
+  "ribbons": [
+    {"id":"pink","name":"Ruy băng hồng phấn","color":"#e6b2c2","photo_url":"/static/curated/ribbon-pink.webp"},
+    {"id":"cream","name":"Ruy băng kem","color":"#deccb6","photo_url":"/static/curated/ribbon-cream.webp"}
+  ]
+}

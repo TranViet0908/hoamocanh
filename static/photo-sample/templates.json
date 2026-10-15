@@ -1,0 +1,208 @@
+{
+  "version": 1,
+  "forms": [
+    {
+      "id": "round",
+      "name": "Bó tròn"
+    },
+    {
+      "id": "natural",
+      "name": "Bó tự nhiên"
+    },
+    {
+      "id": "long",
+      "name": "Bó dài"
+    }
+  ],
+  "mixes": [
+    {
+      "id": "rose-baby",
+      "name": "Hồng + baby",
+      "primary": "Hoa hồng",
+      "secondary": null,
+      "fixed": "Baby trắng và lá xanh giữ màu gốc."
+    },
+    {
+      "id": "rose-daisy",
+      "name": "Hồng + cúc",
+      "primary": "Hoa hồng",
+      "secondary": "Hoa cúc",
+      "fixed": "Lá xanh giữ màu gốc."
+    },
+    {
+      "id": "tulip-baby",
+      "name": "Tulip + baby",
+      "primary": "Tulip",
+      "secondary": null,
+      "fixed": "Baby trắng và lá xanh giữ màu gốc."
+    }
+  ],
+  "templates": [
+    {
+      "id": "rose-natural",
+      "mix": "rose-baby",
+      "form": "natural",
+      "image": "/static/photo-sample/natural-rose-blush-v1.png",
+      "base_colors": {
+        "flower": "#e4b7c1",
+        "paper": "#ddc5a7",
+        "ribbon": "#e6b2c2",
+        "secondary": "#b592c7"
+      },
+      "regions": {
+        "flower": {
+          "cx": 0.5,
+          "cy": 0.365,
+          "rx": 0.47,
+          "ry": 0.3
+        },
+        "ribbon": {
+          "top": 0.7,
+          "bottom": 0.97,
+          "left": 0.35,
+          "right": 0.63
+        },
+        "paper": {
+          "top": 0.035,
+          "bottom": 0.99,
+          "left": 0.025,
+          "right": 0.975
+        }
+      }
+    },
+    {
+      "id": "rose-long",
+      "mix": "rose-baby",
+      "form": "long",
+      "image": "/static/photo-sample/long-rose-blush-v1.png",
+      "base_colors": {
+        "flower": "#e4b7c1",
+        "paper": "#ddc5a7",
+        "ribbon": "#e6b2c2",
+        "secondary": "#b592c7"
+      },
+      "regions": {
+        "flower": {
+          "cx": 0.5,
+          "cy": 0.285,
+          "rx": 0.3,
+          "ry": 0.285
+        },
+        "ribbon": {
+          "top": 0.69,
+          "bottom": 0.92,
+          "left": 0.37,
+          "right": 0.61
+        },
+        "paper": {
+          "top": 0.035,
+          "bottom": 0.99,
+          "left": 0.025,
+          "right": 0.975
+        }
+      }
+    },
+    {
+      "id": "rose-baby-round-v2",
+      "mix": "rose-baby",
+      "form": "round",
+      "image": "/static/photo-sample/mix-rose-baby-v1.png",
+      "base_colors": {
+        "flower": "#e4b7c1",
+        "paper": "#ddc5a7",
+        "ribbon": "#e6b2c2",
+        "secondary": "#b592c7"
+      },
+      "regions": {
+        "flower": {
+          "cx": 0.5,
+          "cy": 0.335,
+          "rx": 0.43,
+          "ry": 0.29
+        },
+        "ribbon": {
+          "top": 0.675,
+          "bottom": 1,
+          "left": 0.28,
+          "right": 0.7
+        },
+        "paper": {
+          "top": 0.035,
+          "bottom": 0.99,
+          "left": 0.025,
+          "right": 0.975
+        }
+      }
+    },
+    {
+      "id": "rose-daisy-natural-v1",
+      "mix": "rose-daisy",
+      "form": "natural",
+      "image": "/static/photo-sample/mix-rose-daisy-v1.png",
+      "base_colors": {
+        "flower": "#e4b7c1",
+        "paper": "#ddc5a7",
+        "ribbon": "#e6b2c2",
+        "secondary": "#b592c7"
+      },
+      "regions": {
+        "flower": {
+          "cx": 0.5,
+          "cy": 0.335,
+          "rx": 0.43,
+          "ry": 0.29
+        },
+        "ribbon": {
+          "top": 0.675,
+          "bottom": 1,
+          "left": 0.28,
+          "right": 0.7
+        },
+        "paper": {
+          "top": 0.035,
+          "bottom": 0.99,
+          "left": 0.025,
+          "right": 0.975
+        },
+        "secondary": {
+          "cx": 0.5,
+          "cy": 0.335,
+          "rx": 0.43,
+          "ry": 0.29
+        }
+      }
+    },
+    {
+      "id": "tulip-baby-long-v1",
+      "mix": "tulip-baby",
+      "form": "long",
+      "image": "/static/photo-sample/mix-tulip-baby-v1.png",
+      "base_colors": {
+        "flower": "#e4b7c1",
+        "paper": "#ddc5a7",
+        "ribbon": "#e6b2c2",
+        "secondary": "#b592c7"
+      },
+      "regions": {
+        "flower": {
+          "cx": 0.5,
+          "cy": 0.335,
+          "rx": 0.34,
+          "ry": 0.29
+        },
+        "ribbon": {
+          "top": 0.675,
+          "bottom": 1,
+          "left": 0.28,
+          "right": 0.7
+        },
+        "paper": {
+          "top": 0.035,
+          "bottom": 0.99,
+          "left": 0.025,
+          "right": 0.975
+        }
+      }
+    }
+  ]
+}
