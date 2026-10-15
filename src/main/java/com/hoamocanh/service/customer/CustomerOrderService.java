@@ -8,13 +8,14 @@ import com.hoamocanh.core.util.QRCodeGenerator;
 import com.hoamocanh.dto.customer.CheckoutReq;
 import com.hoamocanh.dto.customer.DesignItemReq;
 import com.hoamocanh.dto.customer.OrderCheckoutRes;
+import com.hoamocanh.dto.customer.OrderLookupRes;
+import com.hoamocanh.dto.customer.OrderReviewReq;
 import com.hoamocanh.repository.MaterialRepository;
 import com.hoamocanh.repository.OrderRepository;
 import com.hoamocanh.repository.OrderStatusHistoryRepository;
 import com.hoamocanh.repository.ProductTypeRepository;
 import com.hoamocanh.service.admin.BookingService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +36,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CustomerOrderService {
 
-    private static final Set<String> DELIVERY_TYPES = Set.of("ONLINE", "PICKUP", "DELIVERY");
+    // ONLINE: gửi tặng online | PICKUP: khách tự làm tại tiệm (có đặt lịch, chiếm slot)
+    // DELIVERY: Mộc Anh làm giúp rồi giao | STUDIO_PICKUP: Mộc Anh làm giúp, khách đến tiệm nhận (không chiếm slot)
+    private static final Set<String> DELIVERY_TYPES = Set.of("ONLINE", "PICKUP", "DELIVERY", "STUDIO_PICKUP");
     private static final Set<String> PAYMENT_METHODS = Set.of("CASH", "ONLINE");
     private static final String GIFT_UPLOAD_PREFIX = "/uploads/gift/";
 
@@ -47,7 +50,7 @@ public class CustomerOrderService {
     private final CustomerVoucherService voucherService;
     private final QRCodeGenerator qrCodeGenerator;
     private final BookingService bookingService;
-    private final PasswordEncoder passwordEncoder;
+    private final OrderFeeService feeService;
 
     private static boolean blank(String s) {
         return s == null || s.trim().isEmpty();
@@ -55,6 +58,17 @@ public class CustomerOrderService {
 
     private static boolean tooLong(String s, int max) {
         return s != null && s.length() > max;
+    }
+
+    private static boolean phoneOk(String p) {
+        return p != null && p.trim().replaceAll("[\\s.-]", "").matches("^(0|\\+84)\\d{9,10}$");
+    }
+
+    /** Số phải thu = giá gói − giảm giá + phí giao hàng. */
+    private static BigDecimal payableOf(Order o) {
+        BigDecimal d = o.getDiscountAmount() == null ? BigDecimal.ZERO : o.getDiscountAmount();
+        BigDecimal ship = o.getShippingFee() == null ? BigDecimal.ZERO : o.getShippingFee();
+        return o.getTotalPrice().subtract(d).add(ship).max(BigDecimal.ZERO);
     }
 
     private void validateRequest(CheckoutReq req) {
@@ -70,8 +84,17 @@ public class CustomerOrderService {
         if (req.getReceiverName().trim().length() > 100) {
             throw new IllegalArgumentException("Họ tên tối đa 100 ký tự.");
         }
-        if (!req.getReceiverPhone().trim().replaceAll("[\\s.-]", "").matches("^(0|\\+84)\\d{9,10}$")) {
+        if (!phoneOk(req.getReceiverPhone())) {
             throw new IllegalArgumentException("Số điện thoại chưa đúng định dạng.");
+        }
+        // Người đặt hộ: nếu nhập thì phải đủ cả tên và số điện thoại
+        if (!blank(req.getBuyerName()) || !blank(req.getBuyerPhone())) {
+            if (blank(req.getBuyerName()) || blank(req.getBuyerPhone())) {
+                throw new IllegalArgumentException("Vui lòng nhập đủ họ tên và số điện thoại người đặt.");
+            }
+            if (req.getBuyerName().trim().length() > 100 || !phoneOk(req.getBuyerPhone())) {
+                throw new IllegalArgumentException("Thông tin người đặt chưa hợp lệ.");
+            }
         }
         if (tooLong(req.getStyle(), 50) || tooLong(req.getThemeColor(), 50)) {
             throw new IllegalArgumentException("Thông tin phong cách không hợp lệ.");
@@ -82,20 +105,13 @@ public class CustomerOrderService {
         if (tooLong(req.getVoucherCode(), 50)) {
             throw new IllegalArgumentException("Mã giảm giá không hợp lệ.");
         }
-        // Mã mở quà tự đặt: 4-20 chữ hoặc số (BCrypt chỉ xét 72 byte đầu nên cần giới hạn độ dài)
-        if (!blank(req.getGiftPassword()) && !req.getGiftPassword().trim().matches("^[\\p{L}\\p{N}]{4,20}$")) {
-            throw new IllegalArgumentException("Mã mở quà gồm 4-20 chữ hoặc số, không có dấu cách.");
-        }
-        if (tooLong(req.getGiftPasswordHint(), 100)) {
-            throw new IllegalArgumentException("Gợi ý mã mở quà tối đa 100 ký tự.");
-        }
         if (req.getDeliveryType() == null || !DELIVERY_TYPES.contains(req.getDeliveryType())) {
             throw new IllegalArgumentException("Hình thức đầu ra không hợp lệ.");
         }
         if (req.getPaymentMethod() == null || !PAYMENT_METHODS.contains(req.getPaymentMethod())) {
             throw new IllegalArgumentException("Vui lòng chọn hình thức thanh toán.");
         }
-        for (String url : new String[]{req.getGiftImageUrl(), req.getGiftVideoUrl()}) {
+        for (String url : new String[]{req.getGiftImageUrl(), req.getGiftVideoUrl(), req.getBouquetImageUrl()}) {
             if (!blank(url) && (!url.startsWith(GIFT_UPLOAD_PREFIX) || url.contains(".."))) {
                 throw new IllegalArgumentException("Ảnh/video đính kèm không hợp lệ.");
             }
@@ -151,6 +167,8 @@ public class CustomerOrderService {
         Order order = Order.builder()
                 .receiverName(req.getReceiverName().trim())
                 .receiverPhone(req.getReceiverPhone().trim())
+                .buyerName(blank(req.getBuyerName()) ? null : req.getBuyerName().trim())
+                .buyerPhone(blank(req.getBuyerPhone()) ? null : req.getBuyerPhone().trim())
                 .productType(productType)
                 .totalPrice(req.getBudgetLevel())
                 .deliveryType(req.getDeliveryType())
@@ -162,21 +180,11 @@ public class CustomerOrderService {
                 .giftMessage(req.getGiftMessage())
                 .giftImageUrl(req.getGiftImageUrl())
                 .giftVideoUrl(req.getGiftVideoUrl())
+                .bouquetImageUrl("ONLINE".equals(req.getDeliveryType()) ? req.getBouquetImageUrl() : null)
                 .paymentMethod(req.getPaymentMethod())
                 .status("PENDING")
                 .paymentStatus("UNPAID")
                 .build();
-
-        String plainGiftPassword = null;
-        if ("ONLINE".equals(req.getDeliveryType()) && Boolean.TRUE.equals(req.getIsGiftPrivate())) {
-            if (blank(req.getGiftPassword())) {
-                plainGiftPassword = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-            } else {
-                plainGiftPassword = req.getGiftPassword().trim();
-            }
-            order.setGiftPasswordHash(passwordEncoder.encode(plainGiftPassword));
-            order.setGiftPasswordHint(req.getGiftPasswordHint());
-        }
 
         // 5. Áp dụng Voucher (có @Version chống dùng lố số lượt)
         if (!blank(req.getVoucherCode())) {
@@ -199,10 +207,18 @@ public class CustomerOrderService {
             voucherService.incrementVoucherUsage(validVoucher);
         }
 
-        // 6. Trừ tồn kho (@Version trong Material kích hoạt Optimistic Lock nếu 2 khách chốt cùng mili-giây)
+        // 5b. Phí giao hàng (chỉ đơn DELIVERY) và tiền cọc giữ chỗ (chỉ đơn PICKUP); mức phí lấy từ system_configs
+        OrderFeeService.Fees fees = feeService.fees();
+        order.setShippingFee("DELIVERY".equals(req.getDeliveryType()) ? fees.shipFee() : BigDecimal.ZERO);
+        if ("PICKUP".equals(req.getDeliveryType())) {
+            order.setDepositRequired(feeService.depositFor(payableOf(order), fees.depositPercent()));
+        }
+
+        // 6. Trừ tồn kho: khóa ghi từng dòng nguyên liệu (theo id tăng dần nhờ TreeMap) nên 2 khách chốt cùng lúc
+        //    sẽ xếp hàng, người sau thấy kho đã giảm và nhận thông báo hết hàng thay vì lỗi hệ thống
         List<OrderDetail> orderDetails = new ArrayList<>();
         for (Map.Entry<Integer, Integer> e : itemMap.entrySet()) {
-            Material material = materialRepository.findById(e.getKey())
+            Material material = materialRepository.findByIdLocked(e.getKey())
                     .orElseThrow(() -> new ResourceNotFoundException("Nguyên liệu không tồn tại."));
 
             if (Boolean.TRUE.equals(material.getIsDeleted()) || material.getStock() < e.getValue()) {
@@ -239,8 +255,10 @@ public class CustomerOrderService {
                 .note("Khách tạo đơn (" + req.getDeliveryType() + ")")
                 .build());
 
-        BigDecimal discount = saved.getDiscountAmount() == null ? BigDecimal.ZERO : saved.getDiscountAmount();
-        BigDecimal payable = saved.getTotalPrice().subtract(discount).max(BigDecimal.ZERO);
+        BigDecimal payable = payableOf(saved);
+        BigDecimal deposit = saved.getDepositRequired();
+        LocalDateTime holdUntil = deposit == null ? null
+                : (saved.getCreatedAt() != null ? saved.getCreatedAt() : LocalDateTime.now()).plusMinutes(fees.holdMinutes());
 
         return OrderCheckoutRes.builder()
                 .orderId(saved.getId())
@@ -249,9 +267,77 @@ public class CustomerOrderService {
                 .paymentStatus(saved.getPaymentStatus())
                 .paymentMethod(saved.getPaymentMethod())
                 .payableAmount(payable)
+                .shippingFee(saved.getShippingFee())
+                .depositAmount(deposit)
+                .payNowAmount(deposit != null ? deposit : payable)
+                .holdUntil(holdUntil)
                 .qrCodeUrl(giftUrl)
-                .giftPassword(plainGiftPassword)
                 .message("Đơn hàng đã được ghi nhận.")
                 .build();
+    }
+
+    /**
+     * Khách tra lại đơn (kể cả link và QR quà tặng) bằng mã đơn + số điện thoại.
+     * Số điện thoại phải khớp người nhận hoặc người đặt. Sai thông tin luôn trả cùng một thông báo.
+     */
+    @Transactional(readOnly = true)
+    public OrderLookupRes lookup(String orderCode, String phone) {
+        return toLookup(findOwned(orderCode, phone, false));
+    }
+
+    /**
+     * Khách duyệt ảnh thành phẩm: đồng ý thì đơn sang READY, yêu cầu chỉnh lại thì quay về IN_PROGRESS.
+     * Khóa dòng đơn trước khi đọc trạng thái để bấm hai lần không làm hai lần.
+     */
+    @Transactional
+    public OrderLookupRes review(OrderReviewReq req) {
+        Order o = findOwned(req.orderCode(), req.phone(), true);
+        if (!"AWAITING_APPROVAL".equals(o.getStatus())) {
+            throw new IllegalArgumentException("Đơn này hiện không chờ bạn duyệt ảnh.");
+        }
+        String note = req.note() == null ? "" : req.note().trim();
+        if (note.length() > 200) throw new IllegalArgumentException("Nội dung tối đa 200 ký tự.");
+        if (!req.approve() && note.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng cho tiệm biết bạn muốn chỉnh sửa điều gì.");
+        }
+        String to = req.approve() ? "READY" : "IN_PROGRESS";
+        o.setStatus(to);
+        orderRepository.save(o);
+        orderStatusHistoryRepository.save(OrderStatusHistory.builder().order(o).status(to)
+                .note(req.approve() ? "Khách đã duyệt ảnh thành phẩm" + (note.isEmpty() ? "" : ": " + note)
+                        : "Khách yêu cầu chỉnh lại: " + note)
+                .build());
+        return toLookup(o);
+    }
+
+    /** Tìm đơn theo mã + số điện thoại (người nhận hoặc người đặt). Sai thông tin luôn trả cùng một thông báo. */
+    private Order findOwned(String orderCode, String phone, boolean lock) {
+        String notFound = "Không tìm thấy đơn hàng. Vui lòng kiểm tra lại mã đơn và số điện thoại.";
+        String digits = orderCode == null ? "" : orderCode.trim().toUpperCase(Locale.ROOT).replaceFirst("^MA-?", "");
+        if (!digits.matches("\\d{1,9}") || blank(phone)) throw new ResourceNotFoundException(notFound);
+        int id = Integer.parseInt(digits);
+        Order o = (lock ? orderRepository.lockById(id) : orderRepository.findById(id))
+                .orElseThrow(() -> new ResourceNotFoundException(notFound));
+        String p = normPhone(phone);
+        if (!p.equals(normPhone(o.getReceiverPhone())) && !p.equals(normPhone(o.getBuyerPhone()))) {
+            throw new ResourceNotFoundException(notFound);
+        }
+        return o;
+    }
+
+    private OrderLookupRes toLookup(Order o) {
+        // Ảnh thành phẩm chỉ hiện từ lúc gửi khách duyệt trở đi
+        boolean showPhoto = Set.of("AWAITING_APPROVAL", "READY", "COMPLETED").contains(o.getStatus());
+        return new OrderLookupRes("MA-" + o.getId(), o.getStatus(), o.getDeliveryType(),
+                o.getPaymentStatus() == null ? "UNPAID" : o.getPaymentStatus(), o.getPaymentMethod(),
+                payableOf(o), o.getShippingFee(), o.getDepositRequired(), o.getDeliveryTime(),
+                "ONLINE".equals(o.getDeliveryType()) ? o.getQrCodeUrl() : null,
+                showPhoto ? o.getFinishedImageUrl() : null);
+    }
+
+    private static String normPhone(String p) {
+        if (p == null) return "";
+        String s = p.replaceAll("[\\s.-]", "");
+        return s.startsWith("+84") ? "0" + s.substring(3) : s;
     }
 }

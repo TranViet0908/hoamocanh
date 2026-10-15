@@ -17,4 +17,8 @@ public class OrderCheckoutRes {
     private String message;
     private String qrCodeUrl;         // link trang quà tặng nếu chọn GỬI TẶNG ONLINE
     private String giftPassword;      // MỚI: Mã mở quà (plaintext)
+    private BigDecimal shippingFee;   // phí giao hàng (đơn DELIVERY), đã nằm trong payableAmount
+    private BigDecimal depositAmount; // tiền cọc giữ chỗ (đơn PICKUP), null nếu không cần cọc
+    private BigDecimal payNowAmount;  // số tiền cần trả ngay: tiền cọc nếu có, không thì toàn bộ
+    private java.time.LocalDateTime holdUntil; // hạn giữ chỗ nếu chưa nhận được cọc (đơn PICKUP)
 }

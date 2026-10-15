@@ -50,4 +50,12 @@ public class CustomerDesignController {
         designService.validateDesignCart(productType, budgetLevel, selectedMaterials);
         return ResponseEntity.ok(Map.of("message", "Thiết kế hợp lệ."));
     }
+    @GetMapping("/auto-fill")
+    public ResponseEntity<List<DesignItemReq>> autoFillDesign(
+            @RequestParam Integer productType,
+            @RequestParam BigDecimal budgetLevel,
+            @RequestParam(required = false) String themeColor,
+            @RequestParam(required = false) Long seed) {
+        return ResponseEntity.ok(designService.autoFillDesign(productType, budgetLevel, themeColor, seed));
+    }
 }

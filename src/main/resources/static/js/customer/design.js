@@ -100,6 +100,11 @@ function cartItems() {
 }
 const cartTotal = () => cartItems().reduce((s, i) => s + i.price * i.quantity, 0);
 
+// Tiền nguyên liệu tối đa của gói = mức giá x (1 - tỷ lệ nhân sự/lợi nhuận). Server (/design/limits) là nguồn quyết định.
+const materialRatio = () => (state.limits && state.limits.materialRatio != null) ? Number(state.limits.materialRatio) : 1;
+const materialCapOf = level => Math.floor(level * materialRatio() / 1000 + 1e-9) * 1000;
+const budgetCap = () => (state.limits && state.limits.materialBudget != null) ? Number(state.limits.materialBudget) : state.budget;
+
 const groupCount = g => cartItems().filter(i => i.group === g).reduce((s, i) => s + i.quantity, 0);
 const groupLimit = g => {
     const key = GROUPS[g].limit;
@@ -113,11 +118,47 @@ function maxQty(m) {
         max = Math.min(max, qtyOf(m.id) + Math.max(0, lim - groupCount(m.group)));
     }
     if (m.price > 0) {
-        const remainingBudget = Math.max(0, state.budget - cartTotal());
+        const remainingBudget = Math.max(0, budgetCap() - cartTotal());
         const affordableExtra = Math.floor(remainingBudget / m.price);
         max = Math.min(max, qtyOf(m.id) + affordableExtra);
     }
     return max;
+}
+
+// "Đổi hoa": thay một nguyên liệu đang chọn bằng nguyên liệu khác cùng nhóm, vẫn nằm trong ngân sách & tồn kho
+function swapMaterial(id) {
+    const cur = state.materials.find(x => x.id === id);
+    const q = qtyOf(id);
+    if (!cur || !q) return;
+    const budgetLeft = budgetCap() - (cartTotal() - cur.price * q);
+    const options = [];
+    state.materials.forEach(x => {
+        if (x.id === id || x.group !== cur.group || qtyOf(x.id) > 0) return;
+        let n = Math.min(q, x.stock ?? Infinity);
+        if (x.price > 0) n = Math.min(n, Math.floor(budgetLeft / x.price));
+        if (n > 0) options.push({ m: x, n });
+    });
+    if (!options.length) {
+        return showModal('Hiện chưa có lựa chọn khác phù hợp ngân sách trong nhóm này.');
+    }
+    const pick = options[Math.floor(Math.random() * options.length)];
+    state.quantities.delete(id);
+    state.quantities.set(pick.m.id, pick.n);
+    renderMaterials();
+}
+
+// ===== Moodboard (bước 6): lưới ảnh nguyên liệu đã chọn =====
+function renderMoodboard() {
+    const box = qs('#moodboard');
+    if (!box) return;
+    const order = ['packaging', 'main', 'sub', 'leaf', 'accessory', 'other'];
+    const items = cartItems().sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group));
+    box.innerHTML = items.map(i =>
+        '<figure style="margin:0;text-align:center">' +
+            '<img class="mt-img" src="' + esc(imgSrc(i.imageUrl)) + '" alt="' + esc(i.name) + '" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px">' +
+            '<figcaption style="font-size:12px;margin-top:4px">' + esc(i.name) + ' × ' + i.quantity + '</figcaption>' +
+        '</figure>'
+    ).join('');
 }
 
 // ===== Bước 5: nhúng trang mô phỏng /static/index.html =====
@@ -191,6 +232,23 @@ function applyContextToFrame(doc, ctx) {
         // Hai ô này chỉ được đọc khi cần nên không phải bắn sự kiện
         const budget = doc.getElementById('shop-budget');
         if (budget && ctx.budgetLevel) budget.value = ctx.budgetLevel;
+        // Nếu bộ lọc kiểu sản phẩm / nhu cầu khiến danh sách mẫu trống (0 ảnh) thì nới dần để khách vẫn thấy mẫu và thử màu
+        const isEmpty = () => /(^|\s)0 ảnh mẫu phù hợp/.test(doc.body ? (doc.body.innerText || doc.body.textContent || '') : '');
+        const resetSelect = el => {
+            if (!el) return false;
+            const opt = [...el.options].find(o => o.value === 'all' || o.value === '');
+            if (!opt) return false;
+            el.value = opt.value; fire(el, 'change'); return true;
+        };
+        // Mẫu thử màu thường không nằm trong đúng kiểu/nhu cầu của loại sản phẩm -> bỏ cả hai bộ lọc này, giữ ô "chỉ xem mẫu có thể thử màu"
+        const relaxSteps = [() => { resetSelect(kind); resetSelect(need); }];
+        let relaxIdx = 0;
+        const relax = setInterval(() => {
+            if (!doc.body) return clearInterval(relax);
+            if (!isEmpty() || relaxIdx >= relaxSteps.length) return clearInterval(relax);
+            relaxSteps[relaxIdx++]();
+        }, 800);
+
         const color = COLOR_MAP[ctx.themeColor];
         const colorSel = doc.getElementById('shop-flower-color');
         if (color && colorSel && [...colorSel.options].some(o => o.value === color)) colorSel.value = color;
@@ -298,6 +356,7 @@ function renderMaterials() {
                     '<strong>' + esc(m.name) + '</strong>' +
                     '<span class="mt-group">' + esc(m.categoryName || GROUPS[m.group].label) + '</span>' +
                     '<span class="mt-price">' + money(m.price) + ' <small style="color:var(--muted);font-family:var(--sans)">/ ' + esc(m.unit) + '</small></span>' +
+                    (q ? '<button type="button" data-a="swap" data-id="' + esc(m.id) + '" style="align-self:flex-start;margin-top:4px;padding:2px 10px;font-size:12px;border:1px solid var(--line,#d8cfc0);border-radius:999px;background:transparent;cursor:pointer">⟳ Đổi</button>' : '') +
                     (m.stock !== null ? '<span class="mt-stock ' + (low ? 'low' : '') + '">' + (low ? 'Sắp hết · ' : '') + 'Còn ' + m.stock + ' ' + esc(m.unit) + '</span>' : '') +
                 '</div>' +
                 '<div class="mt-qty">' +
@@ -320,14 +379,15 @@ function updateCart() {
     qs('#cartCount').textContent = items.reduce((s, i) => s + i.quantity, 0);
     qs('#cartTotal').textContent = money(total);
 
-    if (total > state.budget) {
-        msg.textContent = 'Vượt ' + money(total - state.budget);
+    const cap = budgetCap();
+    if (total > cap) {
+        msg.textContent = 'Vượt ' + money(total - cap) + ' định mức nguyên liệu của gói';
         msg.classList.add('mt-over');
         const next = nextLevel();
         raise.hidden = next === null;
         if (next !== null) raise.textContent = 'Nâng lên ' + money(next);
     } else {
-        msg.textContent = 'Còn ' + money(state.budget - total) + ' trong ngân sách';
+        msg.textContent = 'Còn ' + money(cap - total) + ' để chọn nguyên liệu (đã trừ công thực hiện)';
         msg.classList.remove('mt-over');
         raise.hidden = true;
     }
@@ -354,7 +414,11 @@ function availableLevels() {
 }
 
 function nextLevel() {
-    const n = availableLevels().find(l => l > state.budget);
+    // Ưu tiên mức giá gần nhất mà định mức nguyên liệu đủ chứa giỏ hiện tại; không có thì lên một bậc
+    const total = cartTotal();
+    const higher = availableLevels().filter(l => l > state.budget);
+    const fit = higher.find(l => materialCapOf(l) >= total);
+    const n = fit !== undefined ? fit : higher[0];
     return n === undefined ? null : n;
 }
 
@@ -431,15 +495,7 @@ async function validateWithServer() {
     });
 }
 
-// ===== Điều hướng bước =====
-function goTo(n) {
-    state.step = n;
-    qsa('section.step').forEach(x => x.classList.toggle('active', +x.dataset.step === n));
-    qs('#stepNumber').textContent = String(n).padStart(2, '0');
-    qs('#progressBar').style.width = (n / 6 * 100) + '%';
-    window.scrollTo({ top: document.querySelector('.flow').offsetTop, behavior: 'smooth' });
-    if (n === 5) initSimulation();
-}
+// ===== Điều hướng bước: xem goTo() ở trên =====
 
 async function tryNext() {
     const n = state.step;
@@ -456,8 +512,127 @@ async function tryNext() {
     goTo(Math.min(6, n + 1));
 }
 
+const STATE_KEY = 'hoaDesignState';
+const STATE_TTL_MS = 24 * 60 * 60 * 1000;
+
+// Lưu trạng thái hiện tại vào sessionStorage để không mất dữ liệu khi quay lại / sửa thiết kế
+function saveDesignState() {
+    try {
+        const payload = {
+            step: state.step,
+            budget: state.budget,
+            style: state.style,
+            themeColor: state.themeColor,
+            occasion: state.occasion,
+            productTypeId: state.productType?.id ?? null,
+            quantities: Array.from(state.quantities.entries())
+        };
+        payload.savedAt = Date.now();
+        localStorage.setItem(STATE_KEY, JSON.stringify(payload));
+    } catch (_) {}
+}
+
+// Xóa thiết kế tạm (gọi sau khi đặt hàng thành công)
+function clearDesignState() {
+    try { localStorage.removeItem(STATE_KEY); sessionStorage.removeItem('hoaOrder'); } catch (_) {}
+}
+
+function loadSavedDesignState() {
+    try {
+        const raw = localStorage.getItem(STATE_KEY);
+        if (raw) {
+            const s = JSON.parse(raw);
+            // Bản lưu quá 24 giờ thì bỏ, tránh hiện lại thiết kế cũ của lần ghé trước
+            if (s && s.savedAt && Date.now() - s.savedAt < STATE_TTL_MS) return s;
+            localStorage.removeItem(STATE_KEY);
+        }
+        // Fallback nếu khách quay lại từ trang checkout mà chỉ có hoaOrder
+        const orderRaw = sessionStorage.getItem('hoaOrder');
+        if (orderRaw) {
+            const o = JSON.parse(orderRaw);
+            return {
+                step: 5,
+                budget: o.budgetLevel,
+                style: o.style,
+                themeColor: o.themeColor,
+                occasion: o.occasion,
+                productTypeId: o.productTypeId,
+                quantities: (o.items || []).map(i => [i.materialId, i.quantity])
+            };
+        }
+    } catch (_) {}
+    return null;
+}
+
+// Gợi ý nhanh (tùy chọn, chỉ chạy khi khách bấm nút): phối nguyên liệu mẫu theo ngân sách và màu sắc.
+// Mặc định khách tự chọn hoa ở Bước 4.
+async function runAutoFill(force = false) {
+    if (!state.productType) return;
+    if (!force && state.quantities.size > 0) return;
+    // Khách đã tự chọn rồi thì hỏi trước khi thay bằng gợi ý
+    if (force && state.quantities.size > 0 &&
+        !confirm('Gợi ý nhanh sẽ thay các nguyên liệu bạn đang chọn. Tiếp tục?')) return;
+    try {
+        const params = new URLSearchParams({
+            productType: state.productType.id,
+            budgetLevel: state.budget
+        });
+        if (state.themeColor) params.set('themeColor', state.themeColor);
+        if (force) params.set('seed', String(Date.now()));   // bấm "Phối lại" -> ra bộ khác
+        const suggested = await api('/design/auto-fill?' + params.toString());
+        if (Array.isArray(suggested) && suggested.length > 0) {
+            state.quantities.clear();
+            const byId = new Map(state.materials.map(m => [m.id, m]));
+            suggested.forEach(({ materialId, quantity }) => {
+                const m = byId.get(materialId);
+                if (m && quantity > 0) {
+                    const validQty = m.stock !== null ? Math.min(quantity, m.stock) : quantity;
+                    if (validQty > 0) state.quantities.set(materialId, validQty);
+                }
+            });
+            saveDesignState();
+            renderMaterials();
+        }
+    } catch (_) {}
+}
+
+// ===== Điều hướng bước (Đồng bộ History API cho điện thoại) =====
+function goTo(n, pushHistory = true) {
+    state.step = n;
+    qsa('section.step').forEach(x => x.classList.toggle('active', +x.dataset.step === n));
+    qs('#stepNumber').textContent = String(n).padStart(2, '0');
+    qs('#progressBar').style.width = (n / 6 * 100) + '%';
+
+    // Ẩn nút Quay lại ở Bước 1, hiện từ Bước 2 trở đi
+    const topBack = qs('#topStepNav');
+    if (topBack) topBack.hidden = (n <= 1);
+
+    saveDesignState();
+    if (pushHistory) {
+        try { history.pushState({ step: n }, '', '#step-' + n); } catch (_) {}
+    }
+
+    window.scrollTo({ top: document.querySelector('.flow').offsetTop, behavior: 'smooth' });
+    if (n === 5) initSimulation();
+    if (n === 6) renderMoodboard();
+}
+
 // ===== Khởi tạo =====
 document.addEventListener('DOMContentLoaded', async () => {
+    // Bắt sự kiện nút Back cứng trên điện thoại / trình duyệt
+    window.addEventListener('popstate', e => {
+        if (e.state && typeof e.state.step === 'number') {
+            goTo(e.state.step, false);
+        } else if (state.step > 1) {
+            goTo(state.step - 1, false);
+        }
+    });
+
+    const autoFillBtn = qs('#autoFillBtn');
+    if (autoFillBtn) {
+        autoFillBtn.onclick = () => runAutoFill(true);
+    }
+
     qsa('.next-step').forEach(b => b.onclick = tryNext);
     qsa('.prev-step').forEach(b => b.onclick = () => goTo(Math.max(1, state.step - 1)));
 
@@ -524,10 +699,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         const id = Number(b.dataset.id);
         const m = state.materials.find(x => x.id === id);
         if (!m) return;
+        if (b.dataset.a === 'swap') { swapMaterial(id); return; }
         const q = Math.max(0, Math.min(qtyOf(id) + (b.dataset.a === 'plus' ? 1 : -1), maxQty(m)));
         q ? state.quantities.set(id, q) : state.quantities.delete(id);
         renderMaterials();
     };
+
+    // Lưu state mỗi khi khách chọn phong cách / màu sắc / dịp tặng hoặc tăng giảm số lượng
+    qsa('.choice-grid[data-choice]').forEach(grid => {
+        grid.addEventListener('click', () => saveDesignState());
+    });
+    qs('#materials').addEventListener('click', () => saveDesignState());
+    qs('#productGrid').addEventListener('click', () => saveDesignState());
+    slider.addEventListener('change', () => saveDesignState());
 
     qs('#raiseBudget').onclick = () => {
         const next = nextLevel();
@@ -561,7 +745,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             simulation: simInfo,
             total: cartTotal(),
             items: items.map(({ materialId, quantity }) => ({ materialId, quantity })),
-            display: items.map(({ name, quantity, price }) => ({ name, quantity, price }))
+            display: items.map(({ name, quantity, price, imageUrl }) => ({ name, quantity, price, imageUrl }))
         };
         try { sessionStorage.setItem('hoaOrder', JSON.stringify(order)); }
         catch (_) {
@@ -573,7 +757,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     qs('#budgetText').textContent = money(state.budget);
+
+    // Khởi tạo dữ liệu & Khôi phục lựa chọn cũ nếu khách quay lại từ trang Chốt đơn ("Sửa thiết kế")
+    const saved = loadSavedDesignState();
     await loadBudgetLevels();
     await loadProductTypes();
+
+    if (saved) {
+        const foundType = state.productTypes.find(p => p.id === saved.productTypeId);
+        if (foundType) state.productType = foundType;
+        if (saved.budget) state.budget = Number(saved.budget);
+        if (saved.style) state.style = saved.style;
+        state.themeColor = saved.themeColor ?? null;
+        state.occasion = saved.occasion ?? null;
+
+        // Đồng bộ lại giao diện các nút Phong cách / Màu sắc / Dịp tặng
+        const reverseChoice = { style: state.style, color: state.themeColor, occasion: state.occasion };
+        qsa('.choice-grid[data-choice]').forEach(grid => {
+            const val = reverseChoice[grid.dataset.choice];
+            grid.querySelectorAll('.choice').forEach(btn => {
+                btn.classList.toggle('selected', val != null && btn.textContent.trim() === val);
+            });
+        });
+
+        renderProductTypes();
+        applyBudgetFloor();
+    }
+
     await loadMaterials();
+
+    if (saved && Array.isArray(saved.quantities)) {
+        const byId = new Map(state.materials.map(m => [m.id, m]));
+        saved.quantities.forEach(([id, q]) => {
+            const m = byId.get(Number(id));
+            if (m && q > 0) {
+                state.quantities.set(m.id, m.stock !== null ? Math.min(q, m.stock) : q);
+            }
+        });
+        renderMaterials();
+    }
+
+    // Mở lại đúng bước đã lưu (nếu có)
+    const initialStep = saved?.step && saved.step >= 1 && saved.step <= 6 ? saved.step : 1;
+    try { history.replaceState({ step: initialStep }, '', '#step-' + initialStep); } catch (_) {}
+    goTo(initialStep, false);
 });

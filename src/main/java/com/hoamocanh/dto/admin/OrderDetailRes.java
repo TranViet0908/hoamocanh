@@ -10,7 +10,8 @@ public record OrderDetailRes(
         String productTypeName, String style, String themeColor, String styleNote,
         BigDecimal totalPrice, BigDecimal discountAmount, BigDecimal payable, BigDecimal paid,
         String giftMessage, String giftImageUrl, String giftVideoUrl, String giftUrl,
-        List<Item> items, List<Pay> payments, List<Hist> history, List<String> nextStatuses) {
+        List<Item> items, List<Pay> payments, List<Hist> history, List<String> nextStatuses,
+        String buyerName, String buyerPhone, BigDecimal shippingFee, BigDecimal depositRequired, String finishedImageUrl) {
 
     public record Item(String name, Integer quantity, BigDecimal unitPrice, String imageUrl) { }
 

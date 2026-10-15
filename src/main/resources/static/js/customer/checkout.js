@@ -3,7 +3,13 @@ const money = n => Number(n || 0).toLocaleString('vi-VN') + 'đ';
 const esc = s => String(s ?? '').replace(/[&<>"']/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// Khớp CheckoutReq.deliveryType: ONLINE | PICKUP | DELIVERY
+const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="100%" height="100%" fill="#f3ece4"/>' +
+    '<text x="50%" y="58%" font-size="36" text-anchor="middle">🌸</text></svg>');
+const imgSrc = u => !u ? PLACEHOLDER : (/^(https?:|\/|data:)/.test(u) ? u : '/' + u);
+
+// Khớp CheckoutReq.deliveryType: ONLINE | PICKUP | DELIVERY | STUDIO_PICKUP
+// (tab "Mộc Anh làm giúp" gửi DELIVERY, hoặc STUDIO_PICKUP khi khách chọn đến tiệm nhận)
 const MODES = {
     ONLINE:   { hint: 'Dùng thiết kế để gửi quà online: viết lời chúc, thêm ảnh hoặc video. Sau khi đặt, hệ thống tạo đường link và mã QR có logo Mộc Anh để gửi người nhận.',
                 time: false, address: false, gift: true },
@@ -45,21 +51,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const simSummaryText = formatSimSummary(orderData.simulation);
 
     // 2. Tóm tắt đơn (kèm cấu hình bản phối mô phỏng từ Bước 5)
+    const simImg = orderData.simulation && orderData.simulation.imageUrl;
     document.querySelector('#orderSummary').innerHTML = `
         <p><b>${esc(orderData.productTypeName || '')}</b> · ${esc([orderData.style, orderData.themeColor, orderData.occasion].filter(Boolean).join(' · '))}</p>
+        ${simImg ? `<img src="${esc(simImg)}" alt="Hình mô phỏng bó hoa" style="display:block;width:100%;max-height:320px;object-fit:cover;border-radius:16px;margin:12px 0 4px">
+        <p style="font-size:11.5px;color:var(--muted);margin:0 0 6px">Hình ảnh chỉ mang tính mô phỏng.</p>` : ''}
         ${simSummaryText ? `<p style="font-size:12.5px;color:var(--muted);margin-top:4px"><b>Bản phối mô phỏng:</b> ${esc(simSummaryText)}</p>` : ''}
         <hr>
         ${(orderData.display || []).map(i =>
-            `<p>${esc(i.name)} ×${i.quantity} <span style="float:right">${money(i.price * i.quantity)}</span></p>`).join('')}
+            `<p style="display:flex;align-items:center;gap:10px;margin:8px 0">
+                <img src="${esc(imgSrc(i.imageUrl))}" alt="" loading="lazy" onerror="this.onerror=null;this.src=PLACEHOLDER" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none">
+                <span style="flex:1">${esc(i.name)} ×${i.quantity}</span>
+                <span>${money(i.price * i.quantity)}</span></p>`).join('')}
         <hr>
         <p><b>Ngân sách gói</b> <b style="float:right">${money(orderData.budgetLevel || orderData.total)}</b></p>
         <p style="font-size:12.5px;color:var(--muted)"><span>Tạm tính nguyên liệu</span> <span style="float:right">${money(orderData.total)}</span></p>`;
 
     // 3. Hình thức đầu ra -> hiện/ẩn ô nhập tương ứng
     let outputType = 'ONLINE';
+    let receive = 'DELIVERY';          // chỉ dùng khi outputType === 'DELIVERY': DELIVERY | STUDIO_PICKUP
     let paymentMethod = 'CASH';
+    const STUDIO_PICKUP_HINT = 'Mộc Anh thực hiện sản phẩm theo thiết kế của bạn, gửi ảnh để bạn duyệt rồi chuẩn bị sẵn để bạn đến tiệm nhận.';
+    const effectiveType = () => outputType === 'DELIVERY' ? receive : outputType;
+    const needAddress = () => MODES[outputType].address && !(outputType === 'DELIVERY' && receive === 'STUDIO_PICKUP');
     const media = { image: null, video: null };
     let uploading = 0;
+    let fees = null;   // { depositPercent, shipFee, holdMinutes } từ /orders/fees; lỗi thì chỉ không hiện thông báo phí
+    fetch(`${API_BASE}/orders/fees`).then(r => r.ok ? r.json() : null).then(f => { fees = f; applyFeeHint(); }).catch(() => {});
+
+    function applyFeeHint() {
+        const el = document.querySelector('#feeHint');
+        const t = effectiveType();
+        let text = '';
+        if (fees && t === 'DELIVERY' && Number(fees.shipFee) > 0) text = `Phí giao hàng ${money(fees.shipFee)} sẽ được cộng vào tổng thanh toán.`;
+        if (fees && t === 'PICKUP') text = `Bạn đặt cọc ${fees.depositPercent}% giá trị đơn để giữ chỗ. Chỗ được giữ ${fees.holdMinutes} phút sau khi đặt, quá hạn mà chưa nhận được cọc thì khung giờ có thể nhường cho khách khác. Phần còn lại thanh toán tại tiệm.`;
+        el.textContent = text; el.hidden = !text;
+    }
 
     const fields = {
         time: { box: form.querySelector('#fieldTime'), input: form.elements.time },
@@ -120,6 +147,35 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) { hint.textContent = err.message; }
     }
 
+    function applyBuyer() {
+        const on = document.querySelector('#buyerOther').checked;
+        document.querySelector('#buyerFields').hidden = !on;
+        if (!on) { form.elements.buyerName.value = ''; form.elements.buyerPhone.value = ''; }
+    }
+    document.querySelector('#buyerOther').onchange = applyBuyer;
+
+    // Mộc Anh làm giúp: giao tận nơi (cần địa chỉ) hoặc đến tiệm nhận (không cần địa chỉ)
+    function applyReceive() {
+        const box = document.querySelector('#receiveTabs');
+        box.hidden = outputType !== 'DELIVERY';
+        // Mộc Anh làm giúp: cho phép đặt hộ người khác (tách người đặt và người nhận)
+        const studio = outputType === 'DELIVERY';
+        document.querySelector('#buyerBox').hidden = !studio;
+        document.querySelector('#nameLabel').textContent = studio ? 'Họ và tên người nhận' : 'Họ và tên';
+        document.querySelector('#phoneLabel').textContent = studio ? 'Số điện thoại người nhận' : 'Số điện thoại';
+        if (!studio) { document.querySelector('#buyerOther').checked = false; applyBuyer(); }
+        applyFeeHint();
+        const addr = needAddress();
+        fields.address.box.hidden = !addr;
+        fields.address.input.required = addr;
+        if (!addr) fields.address.input.value = '';
+        if (outputType === 'DELIVERY') {
+            const pickup = receive === 'STUDIO_PICKUP';
+            document.querySelector('#outputHint').textContent = pickup ? STUDIO_PICKUP_HINT : MODES.DELIVERY.hint;
+            document.querySelector('#timeLabel').textContent = pickup ? 'Thời gian bạn đến nhận hoa' : MODES.DELIVERY.timeLabel;
+        }
+    }
+
     function applyMode(mode) {
         outputType = mode;
         const cfg = MODES[mode];
@@ -133,7 +189,15 @@ document.addEventListener('DOMContentLoaded', () => {
         fields.address.input.required = cfg.address;
         if (cfg.time) document.querySelector('#timeLabel').textContent = cfg.timeLabel;
         togglePicker(mode === 'PICKUP');
+        applyReceive();
     }
+
+    document.querySelectorAll('#receiveTabs button').forEach(btn => btn.onclick = () => {
+        document.querySelectorAll('#receiveTabs button').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        receive = btn.dataset.receive;
+        applyReceive();
+    });
 
     const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);
     fields.time.input.min = now.toISOString().slice(0, 16);
@@ -193,14 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('#giftImage').onchange = e => upload('image', e.target.files[0]);
     document.querySelector('#giftVideo').onchange = e => upload('video', e.target.files[0]);
 
-    const isGiftPrivateCb = document.querySelector('#isGiftPrivate');
-    const giftPwdWrap = document.querySelector('#giftPasswordWrap');
-    if (isGiftPrivateCb && giftPwdWrap) {
-        isGiftPrivateCb.addEventListener('change', e => {
-            giftPwdWrap.style.display = e.target.checked ? 'block' : 'none';
-        });
-    }
-
     applyMode('ONLINE');
     applyPay('CASH');
 
@@ -214,14 +270,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const address = String(fd.get('address') || '').trim();
         const note = String(fd.get('note') || '').trim();
         const giftMsg = String(fd.get('gift') || '').trim();
-        const giftPwd = String(fd.get('giftPassword') || '').trim();
-        const giftHint = String(fd.get('giftPasswordHint') || '').trim();
         const voucher = String(fd.get('voucher') || '').trim();
 
+        const buyerOn = outputType === 'DELIVERY' && document.querySelector('#buyerOther').checked;
+        const buyerName = buyerOn ? String(fd.get('buyerName') || '').trim() : '';
+        const buyerPhone = buyerOn ? String(fd.get('buyerPhone') || '').trim() : '';
+        if (buyerOn && !buyerName) return showModal('Vui lòng nhập họ và tên người đặt.');
+        if (buyerOn && !/^(0|\+84)\d{9,10}$/.test(buyerPhone.replace(/[\s.-]/g, ''))) return showModal('Số điện thoại người đặt chưa đúng định dạng.');
         if (!name) return showModal('Vui lòng nhập họ và tên.');
         if (!/^(0|\+84)\d{9,10}$/.test(phone.replace(/[\s.-]/g, ''))) return showModal('Số điện thoại chưa đúng định dạng.');
         if (MODES[outputType].time && !fd.get('time')) return showModal('Vui lòng chọn thời gian.');
-        if (MODES[outputType].address && !address) return showModal('Vui lòng nhập địa chỉ nhận hàng.');
+        if (needAddress() && !address) return showModal('Vui lòng nhập địa chỉ nhận hàng.');
 
         const gift = MODES[outputType].gift;
         const combinedNotes = [
@@ -236,18 +295,17 @@ document.addEventListener('DOMContentLoaded', () => {
             style: orderData.style,
             themeColor: orderData.themeColor || null,
             styleNote: combinedNotes,
-            deliveryType: outputType,
+            deliveryType: effectiveType(),
             paymentMethod,
             receiverName: name,
             receiverPhone: phone,
-            shippingAddress: MODES[outputType].address ? address : null,
+            buyerName: buyerName || null,
+            buyerPhone: buyerPhone || null,
+            shippingAddress: needAddress() ? address : null,
             deliveryTime: MODES[outputType].time ? fd.get('time') : null,
             giftMessage: gift ? (giftMsg || null) : null,
             giftImageUrl: gift ? media.image : null,
             giftVideoUrl: gift ? media.video : null,
-            isGiftPrivate: gift ? Boolean(isGiftPrivateCb && isGiftPrivateCb.checked) : false,
-            giftPassword: gift ? (giftPwd || null) : null,
-            giftPasswordHint: gift ? (giftHint || null) : null,
             voucherCode: voucher || null,
             items: orderData.items
         };
@@ -257,6 +315,20 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.textContent = 'Đang gửi...';
 
         try {
+            // Quà online: tải ảnh bó hoa mô phỏng lên để trang quà hiển thị
+            let bouquetImageUrl = null;
+            if (gift && simImg && String(simImg).startsWith('data:')) {
+                try {
+                    const blob = await (await fetch(simImg)).blob();
+                    const up = new FormData();
+                    up.append('file', blob, 'bouquet.jpg');
+                    const ur = await fetch(`${API_BASE}/uploads/gift`, { method: 'POST', body: up });
+                    const ud = await ur.json();
+                    if (ur.ok && ud.type === 'image') bouquetImageUrl = ud.url;
+                } catch (_) { /* không có ảnh thì trang quà hiện lưới nguyên liệu */ }
+            }
+            payload.bouquetImageUrl = bouquetImageUrl;
+
             const res = await fetch(`${API_BASE}/orders/checkout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -268,13 +340,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             sessionStorage.setItem('lastOrder', JSON.stringify({
                 orderCode: data.orderCode,
-                deliveryType: outputType,
+                deliveryType: effectiveType(),
                 paymentMethod: data.paymentMethod,
                 payableAmount: data.payableAmount,
-                giftUrl: data.qrCodeUrl || null,
-                giftPassword: data.giftPassword || null
+                shippingFee: data.shippingFee,
+                depositAmount: data.depositAmount,
+                payNowAmount: data.payNowAmount,
+                holdUntil: data.holdUntil,
+                giftUrl: data.qrCodeUrl || null
             }));
             sessionStorage.removeItem('hoaOrder');
+            try { localStorage.removeItem('hoaDesignState'); } catch (_) {}
             location.href = '/customer/thankyou.html?orderCode=' + encodeURIComponent(data.orderCode);
         } catch (err) {
             showModal(err.message, { type: 'error', title: 'Đặt hàng chưa thành công' });

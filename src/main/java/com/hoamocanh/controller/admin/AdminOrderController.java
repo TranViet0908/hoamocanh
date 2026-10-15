@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin/orders")
@@ -31,6 +32,13 @@ public class AdminOrderController {
     public ResponseEntity<OrderDetailRes> updateStatus(@PathVariable Integer id,
                                                        @Valid @RequestBody OrderStatusUpdateReq req, Authentication auth) {
         return ResponseEntity.ok(orderService.updateStatus(id, req, auth.getName()));
+    }
+
+    // Tải ảnh lên bằng /admin/uploads/finished-photo trước, rồi gọi đây với {"url": "..."}; url rỗng = gỡ ảnh
+    @PutMapping("/{id}/finished-photo")
+    public ResponseEntity<OrderDetailRes> finishedPhoto(@PathVariable Integer id,
+                                                        @RequestBody Map<String, String> body, Authentication auth) {
+        return ResponseEntity.ok(orderService.setFinishedPhoto(id, body.get("url"), auth.getName()));
     }
 
     @PostMapping("/{id}/payments")

@@ -36,9 +36,14 @@
             <li><span>Ngân sách</span></li>
             <li><span>Phong cách</span></li>
             <li><span>Nguyên liệu</span></li>
-            <li><span>Hình dung</span></li>
+            <li><span>Sản phẩm</span></li>
             <li><span>Xác nhận</span></li>
         </ol>
+
+        <!-- MỚI: Nút Quay lại đặt cố định ở đầu bước thiết kế (ẩn ở bước 1) -->
+        <div id="topStepNav" style="margin: 12px 0 8px;" hidden>
+            <button type="button" class="button button-light prev-step" style="padding: 8px 16px; font-size: 14px;">← Quay lại bước trước</button>
+        </div>
 
         <!-- Bước 1 -->
         <section class="step active" data-step="1">
@@ -63,7 +68,6 @@
             <div class="range-labels"><span>400.000đ</span><span>1.500.000đ+</span></div>
             <p class="mt-hint">Kéo để chọn mức giá phù hợp. Mức giá quyết định số lượng hoa, lá và phụ kiện bạn được chọn ở bước sau.</p>
             <div class="step-actions">
-                <button type="button" class="button button-light prev-step">← Quay lại</button>
                 <button type="button" class="button button-dark next-step">Chọn phong cách →</button>
             </div>
         </section>
@@ -108,7 +112,6 @@
             </div>
 
             <div class="step-actions">
-                <button type="button" class="button button-light prev-step">← Quay lại</button>
                 <button type="button" class="button button-dark next-step">Chọn nguyên liệu →</button>
             </div>
         </section>
@@ -118,6 +121,10 @@
             <p class="kicker">04 / Nguyên liệu</p>
             <h3>Chọn những điều<br>bạn <i>yêu thích</i></h3>
             <p class="mt-hint">Chỉ hiển thị nguyên liệu đang có, phù hợp với loại sản phẩm và mức giá bạn chọn. Các nhãn bên dưới cho biết bạn còn được chọn bao nhiêu mỗi nhóm.</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                <span style="font-size:13px; color:var(--muted);">Tự chọn hoa bên dưới, hoặc cần ý tưởng thì bấm gợi ý:</span>
+                <button type="button" id="autoFillBtn" class="button button-light" style="padding:6px 14px; font-size:13px;">✨ Gợi ý nhanh</button>
+            </div>
             <div class="material-tabs">
                 <button type="button" class="selected" data-filter="all">Tất cả</button>
                 <button type="button" data-filter="flower">Hoa &amp; lá</button>
@@ -142,8 +149,7 @@
                 <button type="button" id="validate" class="button button-light">Kiểm tra ngân sách</button>
             </div>
             <div class="step-actions">
-                <button type="button" class="button button-light prev-step">← Quay lại</button>
-                <button type="button" class="button button-dark next-step">Xem hình dung →</button>
+                <button type="button" class="button button-dark next-step">Xem sản phẩm →</button>
             </div>
         </section>
 
@@ -158,7 +164,6 @@
             </iframe>
 
             <div class="step-actions" style="margin-top:12px">
-                <button type="button" class="button button-light prev-step">← Quay lại</button>
                 <button type="button" class="button button-dark next-step">Chốt đơn →</button>
             </div>
         </section>
@@ -167,10 +172,11 @@
         <section class="step" data-step="6">
             <p class="kicker">06 / Xác nhận</p>
             <h3>Thiết kế của bạn<br>đã <i>sẵn sàng</i></h3>
+            <div class="mt-collage" id="moodboard" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:10px;margin:14px 0 6px"></div>
+            <p class="mt-hint" style="font-size:12px">Hình ảnh chỉ mang tính mô phỏng. Sản phẩm thực tế có thể thay đổi theo nguồn hoa tươi trong ngày.</p>
             <p class="mt-hint">Ở trang tiếp theo, bạn chọn một trong ba cách nhận hoa: gửi tặng online, tự tay làm tại tiệm hoặc để Mộc Anh làm giúp.</p>
             <form id="confirmForm">
                 <div class="step-actions" style="margin-top:6px">
-                    <button class="button button-light prev-step" type="button">← Quay lại</button>
                     <button class="button button-dark" type="submit">Chuyển sang trang chốt đơn →</button>
                 </div>
             </form>
@@ -179,7 +185,7 @@
 </main>
 
 <script src="/js/customer/modal.js?v=20261017"></script>
-<script src="/js/customer/design.js?v=20261017"></script>
+<script src="/js/customer/design.js?v=20261018"></script>
 <script>
     (function () {
         var items = document.querySelectorAll('#stepper li');

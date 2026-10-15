@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Tra cứu đơn hàng — Mộc Anh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/moc-anh.css">
+</head>
+<body class="page-checkout">
+<header class="site-header">
+    <a class="brand" href="/customer/index.html">
+        <span class="brand-mark">MA</span>
+        <span><b>MỘC ANH</b><small>flower studio</small></span>
+    </a>
+</header>
+<main id="main-content" class="flow">
+    <div class="flow-shell">
+        <p class="eyebrow">Tra cứu</p>
+        <h2>Đơn hàng <i>của bạn</i></h2>
+        <p class="mt-hint">Nhập mã đơn (dạng MA-123) và số điện thoại đã dùng khi đặt.</p>
+
+        <form id="lookupForm" novalidate onsubmit="return false;">
+            <label>Mã đơn<input name="code" required autocomplete="off" placeholder="MA-123"></label>
+            <label>Số điện thoại<input name="phone" type="tel" required inputmode="tel" autocomplete="tel"></label>
+            <button class="button button-dark" type="submit">Tra cứu →</button>
+        </form>
+
+        <p id="lookupError" style="color:#9a504b;margin-top:16px" hidden></p>
+
+        <div class="mt-box" id="result" hidden style="margin-top:24px">
+            <h4 id="resCode"></h4>
+            <p id="resStatus"></p>
+            <p id="resPay"></p>
+            <p id="resTime" hidden></p>
+            <div id="photoBlock" hidden>
+                <h4 style="margin-top:18px">Ảnh thành phẩm</h4>
+                <img id="photoImg" alt="Ảnh thành phẩm" style="display:block;width:100%;max-height:420px;object-fit:cover;border-radius:16px">
+                <div id="reviewBox" hidden>
+                    <label style="margin-top:12px">Nếu cần chỉnh lại, bạn muốn sửa điều gì?<textarea id="reviewNote" rows="2" maxlength="200"></textarea></label>
+                    <div class="mt-actions">
+                        <button type="button" class="button button-dark" id="approveBtn">Tôi duyệt</button>
+                        <button type="button" class="button button-light" id="reviseBtn">Yêu cầu chỉnh lại</button>
+                    </div>
+                </div>
+            </div>
+            <div id="giftBlock" hidden>
+                <h4 style="margin-top:18px">Món quà của bạn</h4>
+                <div class="mt-qr" id="qrWrap"><div id="qrCanvas"></div><span class="mt-qr-logo">MA</span></div>
+                <p class="mt-link" id="giftLink"></p>
+                <div class="mt-actions">
+                    <button type="button" class="button button-light" id="copyLink">Sao chép link</button>
+                    <a class="button button-light" id="openGift" target="_blank" rel="noopener">Xem trang quà</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="/js/customer/order-lookup.js"></script>
+</body>
+</html>

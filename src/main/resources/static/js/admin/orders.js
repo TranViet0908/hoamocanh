@@ -1,7 +1,7 @@
 /* Trang Đơn hàng: lọc theo hình thức/trạng thái, xem thiết kế, ghi nhận thanh toán, chuyển trạng thái. */
 (async function () {
     const { api, esc, money, toast } = Admin;
-    const TYPE = { ONLINE: 'Gửi tặng online', PICKUP: 'Tự làm tại tiệm', DELIVERY: 'Mộc Anh làm giúp' };
+    const TYPE = { ONLINE: 'Gửi tặng online', PICKUP: 'Tự làm tại tiệm', DELIVERY: 'Mộc Anh làm giúp', STUDIO_PICKUP: 'Mộc Anh làm giúp (đến nhận)' };
     const ST = {
         PENDING: ['Chờ xác nhận', 'warn'], CONFIRMED: ['Đã xác nhận', 'info'], PREPARING: ['Đang chuẩn bị nguyên liệu', 'info'],
         IN_PROGRESS: ['Đang thực hiện', 'info'], AWAITING_APPROVAL: ['Chờ khách duyệt', 'warn'],
@@ -100,13 +100,23 @@
             <div class="od-gift" style="background:#faefd7">Đơn đã hủy nhưng đã nhận <b>${money(o.paid)}</b>. Hãy gọi cho khách để thống nhất việc hoàn tiền:
             <a href="tel:${esc(digits(o.phone))}">Gọi ${esc(o.phone)}</a> · <a href="https://zalo.me/${esc(digits(o.phone))}" target="_blank" rel="noopener">Nhắn Zalo</a></div></div>` : '';
         const safeGift = u => typeof u === 'string' && u.startsWith('/uploads/gift/') && !u.includes('..') ? u : null;
+        const safeProd = u => typeof u === 'string' && u.startsWith('/uploads/product/') && !u.includes('..') ? u : null;
+        const studio = o.deliveryType === 'DELIVERY' || o.deliveryType === 'STUDIO_PICKUP';
+        const canPhoto = studio && ['IN_PROGRESS', 'AWAITING_APPROVAL'].includes(o.status);
+        const photoSec = studio && (safeProd(o.finishedImageUrl) || canPhoto) ? `<div class="od-sec"><h3>Ảnh thành phẩm</h3>
+            ${safeProd(o.finishedImageUrl) ? `<img src="${esc(safeProd(o.finishedImageUrl))}" alt="Ảnh thành phẩm" style="max-width:100%;border-radius:10px">`
+              : '<p class="adm-muted" style="margin:0 0 8px">Chưa có ảnh thành phẩm.</p>'}
+            ${canPhoto ? `<div style="margin-top:10px"><input type="file" id="photoFile" accept="image/jpeg,image/png,image/webp">
+              ${safeProd(o.finishedImageUrl) ? ' <button type="button" class="adm-btn" id="photoRemove">Gỡ ảnh</button>' : ''}
+              <p class="adm-muted" style="margin:6px 0 0;font-size:12px">Tải ảnh trước khi bấm "Gửi khách duyệt". Khách xem và duyệt ảnh ở trang Tra cứu đơn hàng (mã đơn + số điện thoại), hãy báo khách qua điện thoại hoặc Zalo.</p></div>` : ''}</div>` : '';
 
         $('#dwBody').innerHTML = refund + `
           <div class="od-sec"><h3>Khách hàng</h3><div class="od-kv">
-            <span>Họ tên</span><b>${esc(o.customerName)}</b>
+            <span>${o.buyerName ? 'Người nhận' : 'Họ tên'}</span><b>${esc(o.customerName)}</b>
             <span>Liên hệ</span><div><a href="tel:${esc(digits(o.phone))}">${esc(o.phone)}</a> · <a href="https://zalo.me/${esc(digits(o.phone))}" target="_blank" rel="noopener">Zalo</a></div>
+            ${o.buyerName ? `<span>Người đặt</span><div><b>${esc(o.buyerName)}</b> · <a href="tel:${esc(digits(o.buyerPhone))}">${esc(o.buyerPhone)}</a> · <a href="https://zalo.me/${esc(digits(o.buyerPhone))}" target="_blank" rel="noopener">Zalo</a></div>` : ''}
             <span>Hình thức</span><b>${TYPE[o.deliveryType] || esc(o.deliveryType)}</b>
-            ${o.deliveryType === 'ONLINE' ? '' : `<span>${o.deliveryType === 'PICKUP' ? 'Khách đến lúc' : 'Giao lúc'}</span><b>${fmt(o.deliveryTime)}</b>`}
+            ${o.deliveryType === 'ONLINE' ? '' : `<span>${o.deliveryType === 'PICKUP' ? 'Khách đến lúc' : o.deliveryType === 'STUDIO_PICKUP' ? 'Khách đến nhận lúc' : 'Giao lúc'}</span><b>${fmt(o.deliveryTime)}</b>`}
             ${o.shippingAddress ? `<span>Địa chỉ</span><div>${esc(o.shippingAddress)}</div>` : ''}
             <span>Đặt lúc</span><div>${fmt(o.createdAt)}</div></div></div>
 
@@ -124,8 +134,12 @@
             ${safeGift(o.giftVideoUrl) ? `<video src="${esc(safeGift(o.giftVideoUrl))}" controls playsinline preload="metadata"></video>` : ''}</div>
             ${o.giftUrl ? `<p style="margin:10px 0 0"><a href="${esc(o.giftUrl)}" target="_blank" rel="noopener">Mở trang quà tặng</a> · <a href="#" id="copyGift">Sao chép link</a></p>` : ''}</div>` : ''}
 
+          ${photoSec}
+
           <div class="od-sec"><h3>Thanh toán</h3><div class="od-kv">
             <span>Khách chọn</span><div>${o.paymentMethod === 'ONLINE' ? 'Chuyển khoản online' : 'Trả trực tiếp'}</div>
+            ${o.shippingFee > 0 ? `<span>Phí giao hàng</span><div>${money(o.shippingFee)} (đã gồm)</div>` : ''}
+            ${o.depositRequired > 0 ? `<span>Cọc yêu cầu</span><div>${money(o.depositRequired)}</div>` : ''}
             <span>Cần thu</span><b>${money(o.payable)}</b><span>Đã nhận</span><div>${money(o.paid)}</div>
             <span>Còn lại</span><b style="color:${remaining ? 'var(--bad)' : 'var(--ok)'}">${money(remaining)}</b></div>
             ${o.payments.map(p => `<div class="od-item"><div><b>${money(p.amount)}</b> · ${METHOD[p.method] || esc(p.method)}<br>
@@ -181,6 +195,26 @@
         e.preventDefault();
         try { await navigator.clipboard.writeText(cur.giftUrl); toast('Đã sao chép link.', 'ok'); }
         catch (_) { window.prompt('Sao chép link này:', cur.giftUrl); }
+    });
+
+    // Ảnh thành phẩm: tải lên rồi gắn vào đơn; cũng dùng để gỡ ảnh
+    $('#dwBody').addEventListener('change', async e => {
+        if (e.target.id !== 'photoFile' || !e.target.files[0]) return;
+        const input = e.target, fd = new FormData();
+        fd.append('file', input.files[0]); input.disabled = true;
+        try {
+            const res = await fetch('/admin/uploads/finished-photo', { method: 'POST', body: fd, credentials: 'same-origin' });
+            let d = null; try { d = await res.json(); } catch (_) { }
+            if (!res.ok) throw new Error(d?.message || `Lỗi máy chủ (${res.status})`);
+            cur = await api(`/orders/${cur.id}/finished-photo`, { method: 'PUT', body: { url: d.url } });
+            toast('Đã lưu ảnh thành phẩm.', 'ok'); renderDetail();
+        } catch (ex) { toast(ex.message, 'error'); input.disabled = false; input.value = ''; }
+    });
+    $('#dwBody').addEventListener('click', async e => {
+        if (e.target.id !== 'photoRemove') return;
+        e.target.disabled = true;
+        try { cur = await api(`/orders/${cur.id}/finished-photo`, { method: 'PUT', body: { url: null } }); toast('Đã gỡ ảnh.', 'ok'); renderDetail(); }
+        catch (ex) { toast(ex.message, 'error'); e.target.disabled = false; }
     });
 
     try { await load(); const qid = new URLSearchParams(location.search).get('id'); if (qid) openOrder(+qid); } catch (e) { $('#rows').innerHTML = `<tr><td colspan="7" class="od-empty">${esc(e.message)}</td></tr>`; }

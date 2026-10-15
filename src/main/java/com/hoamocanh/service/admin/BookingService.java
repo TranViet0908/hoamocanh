@@ -5,6 +5,7 @@ import com.hoamocanh.core.entity.SystemConfig;
 import com.hoamocanh.dto.admin.CalendarDto.*;
 import com.hoamocanh.repository.OrderRepository;
 import com.hoamocanh.repository.SystemConfigRepository;
+import com.hoamocanh.service.customer.OrderFeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ public class BookingService {
 
     private final SystemConfigRepository configRepository;
     private final OrderRepository orderRepository;
+    private final OrderFeeService feeService;
 
     // ---------- Cấu hình ----------
     @Transactional(readOnly = true)
@@ -83,7 +85,9 @@ public class BookingService {
     public List<PublicSlot> publicSlots(LocalDate date) {
         checkDateRange(date);
         BookingConfig c = getConfig();
-        List<Order> orders = orderRepository.findPickupBetween(date.atStartOfDay(), date.plusDays(1).atStartOfDay());
+        // Chỉ đếm đơn đã cọc hoặc còn trong hạn giữ chỗ
+        List<Order> orders = orderRepository.findHeldPickupBetween(date.atStartOfDay(), date.plusDays(1).atStartOfDay(),
+                LocalDateTime.now().minusMinutes(feeService.holdMinutes()));
         LocalDateTime now = LocalDateTime.now();
         List<PublicSlot> out = new ArrayList<>();
         for (LocalTime st : starts(c)) {
@@ -99,6 +103,10 @@ public class BookingService {
     @Transactional
     public void assertSlotAvailable(LocalDateTime t) {
         if (t == null) throw new IllegalArgumentException("Vui lòng chọn khung giờ đến tiệm.");
+        // QUAN TRỌNG: phải khóa trước mọi lệnh đọc DB. MySQL (REPEATABLE READ) chụp snapshot ở lần đọc thường đầu tiên;
+        // nếu đọc cấu hình trước khi khóa thì sau khi chờ khóa vẫn đếm theo dữ liệu cũ và có thể bán quá số chỗ.
+        configRepository.lockByKey(K_LOCK).orElseGet(() -> configRepository.save(
+                SystemConfig.builder().configKey(K_LOCK).configValue("1").description("Khóa nội bộ khi đặt lịch").build()));
         checkDateRange(t.toLocalDate());
         BookingConfig c = getConfig();
         LocalTime time = t.toLocalTime().withSecond(0).withNano(0);
@@ -106,9 +114,7 @@ public class BookingService {
         LocalDateTime s = t.toLocalDate().atTime(time), e = s.plusMinutes(c.slotMinutes());
         if (!s.isAfter(LocalDateTime.now())) throw new IllegalArgumentException("Khung giờ này đã qua, vui lòng chọn khung khác.");
 
-        configRepository.lockByKey(K_LOCK).orElseGet(() -> configRepository.save(
-                SystemConfig.builder().configKey(K_LOCK).configValue("1").description("Khóa nội bộ khi đặt lịch").build()));
-        if (orderRepository.findPickupBetween(s, e).size() >= c.capacity()) {
+        if (orderRepository.findHeldPickupBetween(s, e, LocalDateTime.now().minusMinutes(feeService.holdMinutes())).size() >= c.capacity()) {
             throw new IllegalArgumentException("Khung giờ này vừa hết chỗ, vui lòng chọn khung khác.");
         }
     }

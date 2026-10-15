@@ -38,9 +38,15 @@ public class AdminOrderService {
      * Quy trình theo hình thức:
      *  ONLINE   (gửi tặng online)    : Chờ xác nhận > Đã xác nhận > Hoàn thành
      *  PICKUP   (tự làm tại tiệm)    : ... > Chuẩn bị nguyên liệu > Đang thực hiện > Hoàn thành
-     *  DELIVERY (Mộc Anh làm giúp)   : ... > Chuẩn bị > Thực hiện > Chờ khách duyệt > Sẵn sàng giao/nhận > Hoàn thành
+     *  DELIVERY / STUDIO_PICKUP (Mộc Anh làm giúp, giao hoặc khách đến nhận):
+     *                                  ... > Chuẩn bị > Thực hiện > Chờ khách duyệt > Sẵn sàng giao/nhận > Hoàn thành
      * Đơn chưa xong thì lúc nào cũng được hủy.
      */
+    /** Mộc Anh làm giúp: giao tận nơi hoặc để khách đến tiệm nhận. */
+    static boolean studioMade(String deliveryType) {
+        return "DELIVERY".equals(deliveryType) || "STUDIO_PICKUP".equals(deliveryType);
+    }
+
     static List<String> nextStatuses(String deliveryType, String status) {
         List<String> flow = switch (deliveryType == null ? "" : deliveryType) {
             case "ONLINE" -> List.of("PENDING", "CONFIRMED", "COMPLETED");
@@ -50,7 +56,7 @@ public class AdminOrderService {
         List<String> out = new ArrayList<>();
         int i = flow.indexOf(status);
         if (i >= 0 && i < flow.size() - 1) out.add(flow.get(i + 1));
-        if ("DELIVERY".equals(deliveryType)) {
+        if (studioMade(deliveryType)) {
             if ("IN_PROGRESS".equals(status)) out.add("READY");              // bỏ qua bước khách duyệt
             if ("AWAITING_APPROVAL".equals(status)) out.add("IN_PROGRESS");  // khách muốn chỉnh lại
         }
@@ -60,7 +66,8 @@ public class AdminOrderService {
 
     private static BigDecimal payable(Order o) {
         BigDecimal d = o.getDiscountAmount() == null ? BigDecimal.ZERO : o.getDiscountAmount();
-        return o.getTotalPrice().subtract(d).max(BigDecimal.ZERO);
+        BigDecimal ship = o.getShippingFee() == null ? BigDecimal.ZERO : o.getShippingFee();
+        return o.getTotalPrice().subtract(d).add(ship).max(BigDecimal.ZERO);
     }
 
     // ---------- Đọc ----------
@@ -82,6 +89,8 @@ public class AdminOrderService {
     // ---------- Ghi ----------
     @Transactional
     public OrderDetailRes updateStatus(Integer id, OrderStatusUpdateReq req, String staffPhone) {
+        // Khóa dòng đơn trước: tránh 2 nhân viên cùng hủy một đơn làm hoàn kho 2 lần
+        orderRepository.lockById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng."));
         Order o = find(id);
         String to = req.getNewStatus().trim();
         String cur = normalize(o.getStatus());
@@ -90,12 +99,19 @@ public class AdminOrderService {
         if (!STATUSES.contains(to) || !nextStatuses(o.getDeliveryType(), cur).contains(to)) {
             throw new IllegalArgumentException("Không thể chuyển đơn này sang trạng thái đó.");
         }
+        if ("AWAITING_APPROVAL".equals(to) && (o.getFinishedImageUrl() == null || o.getFinishedImageUrl().isBlank())) {
+            throw new IllegalArgumentException("Vui lòng tải ảnh thành phẩm trước khi gửi khách duyệt.");
+        }
         if ("CANCELLED".equals(to)) {
             if (note == null) throw new IllegalArgumentException("Vui lòng nhập lý do hủy đơn.");
             // Chưa chuẩn bị nguyên liệu thì trả hoa về kho (lúc khách đặt đã trừ kho)
             if ("PENDING".equals(cur) || "CONFIRMED".equals(cur)) {
-                for (OrderDetail d : o.getOrderDetails()) {
-                    Material m = d.getMaterial();
+                // Khóa từng nguyên liệu theo id tăng dần (cùng thứ tự với lúc khách đặt) để không deadlock
+                List<OrderDetail> sorted = o.getOrderDetails().stream()
+                        .sorted(Comparator.comparing(d -> d.getMaterial().getId())).toList();
+                for (OrderDetail d : sorted) {
+                    Material m = materialRepository.findByIdLocked(d.getMaterial().getId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Nguyên liệu không tồn tại."));
                     m.setStock(m.getStock() + d.getQuantity());
                     materialRepository.save(m);
                 }
@@ -134,6 +150,27 @@ public class AdminOrderService {
         return toDetail(o);
     }
 
+    /** Tiệm tải (hoặc gỡ, url = null) ảnh thành phẩm để khách duyệt. Chỉ đơn Mộc Anh làm giúp, đang thực hiện hoặc chờ duyệt. */
+    @Transactional
+    public OrderDetailRes setFinishedPhoto(Integer id, String url, String staffPhone) {
+        orderRepository.lockById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng."));
+        Order o = find(id);
+        String st = normalize(o.getStatus());
+        if (!studioMade(o.getDeliveryType())) throw new IllegalArgumentException("Chỉ đơn Mộc Anh làm giúp mới có ảnh thành phẩm.");
+        if (!"IN_PROGRESS".equals(st) && !"AWAITING_APPROVAL".equals(st)) {
+            throw new IllegalArgumentException("Chỉ đổi ảnh thành phẩm khi đơn đang thực hiện hoặc đang chờ khách duyệt.");
+        }
+        String clean = url == null || url.isBlank() ? null : url.trim();
+        if (clean != null && (!clean.startsWith("/uploads/product/") || clean.contains(".."))) {
+            throw new IllegalArgumentException("Ảnh thành phẩm không hợp lệ.");
+        }
+        o.setFinishedImageUrl(clean);
+        orderRepository.save(o);
+        historyRepository.save(OrderStatusHistory.builder().order(o).status(st)
+                .note(clean == null ? "Đã gỡ ảnh thành phẩm" : "Đã cập nhật ảnh thành phẩm").createdBy(staff(staffPhone)).build());
+        return toDetail(o);
+    }
+
     // ---------- Tiện ích ----------
     private Order find(Integer id) {
         return orderRepository.findDetailById(id)
@@ -166,6 +203,8 @@ public class AdminOrderService {
                 historyRepository.findByOrderIdOrderByIdAsc(o.getId()).stream().map(h -> new OrderDetailRes.Hist(
                         h.getStatus(), h.getNote(), h.getCreatedBy() == null ? null : h.getCreatedBy().getFullName(),
                         h.getCreatedAt())).toList(),
-                nextStatuses(o.getDeliveryType(), status));
+                nextStatuses(o.getDeliveryType(), status),
+                o.getBuyerName(), o.getBuyerPhone(), o.getShippingFee() == null ? BigDecimal.ZERO : o.getShippingFee(),
+                o.getDepositRequired(), o.getFinishedImageUrl());
     }
 }

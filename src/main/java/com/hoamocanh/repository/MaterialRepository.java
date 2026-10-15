@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface MaterialRepository extends JpaRepository<Material, Integer> {
 
     // Hoa còn tồn kho, chưa xóa, thuộc Category được phép; sắp theo nhóm rồi tên cho giao diện ổn định
-    @Query("SELECT m FROM Material m WHERE m.category.id IN :categoryIds AND m.stock > 0 AND m.isDeleted = false ORDER BY m.category.id, m.name")
+    @Query("SELECT m FROM Material m JOIN FETCH m.category WHERE m.category.id IN :categoryIds AND m.stock > 0 AND m.isDeleted = false ORDER BY m.category.id, m.name")
     List<Material> findAvailableMaterialsByCategories(@Param("categoryIds") List<Integer> categoryIds);
 
     // MỚI (admin): toàn bộ nguyên liệu kể cả đang ẩn, nạp sẵn category để không bị N+1
@@ -25,4 +25,12 @@ public interface MaterialRepository extends JpaRepository<Material, Integer> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT m FROM Material m JOIN FETCH m.category WHERE m.id = :id")
     Optional<Material> findByIdForUpdate(@Param("id") Integer id);
+
+    // Khóa riêng dòng nguyên liệu (không JOIN FETCH category) để trừ/hoàn kho:
+    // khách mua hoa cùng danh mục không phải chờ nhau và không bị khóa chéo qua bảng categories.
+    // Luôn khóa theo thứ tự id tăng dần để tránh deadlock.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Material m WHERE m.id = :id")
+    Optional<Material> findByIdLocked(@Param("id") Integer id);
+
 }

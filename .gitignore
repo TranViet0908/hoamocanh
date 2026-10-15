@@ -31,3 +31,22 @@ build/
 
 ### VS Code ###
 .vscode/
+.env
+target/
+uploads/
+.idea/
+
+### Sensitive Configs & Data ###
+.env
+.env.*
+!.env.example
+**/application.properties
+**/application-*.properties
+!**/application.properties.example
+
+### Local Storage & SQLite ###
+data/
+uploads/
+*.db
+*.sqlite
+*.sqlite3

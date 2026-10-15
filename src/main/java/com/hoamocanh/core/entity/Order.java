@@ -70,6 +70,14 @@ public class Order {
     @Column(name = "gift_video_url")
     private String giftVideoUrl;
 
+    // Ảnh đóa hoa mô phỏng khách đã chốt, hiển thị ở trang quà tặng
+    @Column(name = "bouquet_image_url")
+    private String bouquetImageUrl;
+
+    // Ảnh thành phẩm tiệm tải lên để khách duyệt (đơn Mộc Anh làm giúp), đường dẫn /uploads/product/...
+    @Column(name = "finished_image_url")
+    private String finishedImageUrl;
+
     @Column(name = "qr_code_url")
     private String qrCodeUrl;
 
@@ -87,6 +95,21 @@ public class Order {
 
     @Column(name = "delivery_time")
     private LocalDateTime deliveryTime;
+
+    // Người đặt hộ (null = người đặt chính là người nhận)
+    @Column(name = "buyer_name", length = 100)
+    private String buyerName;
+
+    @Column(name = "buyer_phone", length = 20)
+    private String buyerPhone;
+
+    // Phí giao hàng (đơn DELIVERY), cộng vào số phải thu
+    @Column(name = "shipping_fee", precision = 10, scale = 2)
+    private BigDecimal shippingFee;
+
+    // Tiền cọc giữ chỗ yêu cầu (đơn PICKUP)
+    @Column(name = "deposit_required", precision = 10, scale = 2)
+    private BigDecimal depositRequired;
 
     @Column(name = "gift_password_hash")
     private String giftPasswordHash;

@@ -1,6 +1,5 @@
 package com.hoamocanh.dto.customer;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,6 +21,9 @@ public class CheckoutReq {
     // Thông tin nhận hàng / Đặt lịch đến tiệm
     private String receiverName;
     private String receiverPhone;
+    // Người đặt hộ (tùy chọn). Để trống nghĩa là người đặt cũng chính là người nhận.
+    private String buyerName;
+    private String buyerPhone;
     private String shippingAddress;
     private LocalDateTime deliveryTime; // Dùng chung cho giờ giao hàng hoặc giờ khách đến tiệm (PICKUP)
 
@@ -29,6 +31,8 @@ public class CheckoutReq {
     private String giftMessage;
     private String giftImageUrl;
     private String giftVideoUrl;
+    // Ảnh đóa hoa mô phỏng khách đã chốt ở Bước 5 (đường dẫn /uploads/gift/...)
+    private String bouquetImageUrl;
 
     // Hình thức thanh toán: CASH (trực tiếp khi nhận/tại tiệm) | ONLINE
     private String paymentMethod;
@@ -38,9 +42,4 @@ public class CheckoutReq {
 
     // Giỏ hoa khách tự thiết kế
     private List<DesignItemReq> items;
-    // Thiết lập bảo mật quà tặng
-    @JsonProperty("isGiftPrivate")
-    private Boolean isGiftPrivate;
-    private String giftPassword;
-    private String giftPasswordHint;
 }

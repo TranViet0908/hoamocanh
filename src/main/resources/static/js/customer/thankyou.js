@@ -31,20 +31,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             getEl('#qrWrap').hidden = true;
         }
 
-        let shareText = last.giftUrl;
-        if (last.giftPassword) {
-            getEl('#giftPasswordDisplay').hidden = false;
-            getEl('#giftPasswordTxt').textContent = last.giftPassword;
-            shareText = `Có một món quà từ Mộc Anh dành cho bạn!\nLink mở quà: ${last.giftUrl}\nMã bí mật: ${last.giftPassword}`;
-        }
-
         // Sự kiện Copy cho nút "Sao chép link"
         getEl('#copyLink').onclick = async () => {
             try {
-                await navigator.clipboard.writeText(shareText);
+                await navigator.clipboard.writeText(last.giftUrl);
                 getEl('#copyLink').textContent = 'Đã sao chép ✓';
             } catch (_) {
-                window.prompt('Sao chép nội dung này:', shareText);
+                window.prompt('Sao chép link này:', last.giftUrl);
             }
         };
 
@@ -58,9 +51,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const payBox = getEl('#payBox'), body = getEl('#payBody');
     payBox.hidden = false;
 
-    if (last.paymentMethod === 'ONLINE') {
-        getEl('#payTitle').textContent = 'Thanh toán online';
-        const amount = Number(last.payableAmount || 0);
+    const deposit = Number(last.depositAmount || 0);      // > 0: đơn tự làm tại tiệm, phải cọc để giữ chỗ
+    const ship = Number(last.shippingFee || 0);
+    const total = Number(last.payableAmount || 0);
+    const amount = Number(last.payNowAmount ?? last.payableAmount ?? 0);
+    const fmtTime = v => { const d = new Date(v); return isNaN(d) ? '' : d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }); };
+
+    // Chuyển khoản: đơn chọn thanh toán online, hoặc đơn PICKUP (cọc luôn chuyển khoản để giữ chỗ)
+    const viaBank = deposit > 0 || last.paymentMethod === 'ONLINE';
+    getEl('#payTitle').textContent = deposit > 0 ? 'Đặt cọc giữ chỗ' : (viaBank ? 'Thanh toán online' : 'Thanh toán trực tiếp');
+
+    const extra = [
+        ship > 0 ? `<p style="font-size:12px;color:var(--muted)">Đã gồm phí giao hàng ${money(ship)}.</p>` : '',
+        deposit > 0 ? `<p style="font-size:12px;color:var(--muted)">Tổng giá trị đơn ${money(total)}. Phần còn lại ${money(total - deposit)} thanh toán tại tiệm.</p>` : '',
+        deposit > 0 && last.holdUntil ? `<p style="font-size:12px;color:var(--muted)">Chỗ được giữ đến ${escHtml(fmtTime(last.holdUntil))}. Quá hạn mà tiệm chưa nhận được cọc, khung giờ có thể nhường cho khách khác.</p>` : ''
+    ].join('');
+    const amountLabel = deposit > 0 ? 'Tiền cọc' : 'Số tiền';
+
+    if (viaBank) {
         const hasBank = shop.bankCode && shop.bankAccount;
         if (hasBank) {
             const qr = `https://img.vietqr.io/image/${encodeURIComponent(shop.bankCode)}-${encodeURIComponent(shop.bankAccount)}-compact2.png`
@@ -71,17 +79,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p>Ngân hàng: <b>${escHtml(shop.bankCode)}</b></p>
                     <p>Số tài khoản: <b>${escHtml(shop.bankAccount)}</b></p>
                     ${shop.bankHolder ? `<p>Chủ tài khoản: <b>${escHtml(shop.bankHolder)}</b></p>` : ''}
-                    <p>Số tiền: <b>${money(amount)}</b></p>
+                    <p>${amountLabel}: <b>${money(amount)}</b></p>
                     <p>Nội dung: <b>${escHtml(code || '')}</b></p>
                 </div>
+                ${extra}
                 <p style="font-size:11px;color:var(--muted)">Vui lòng ghi đúng nội dung chuyển khoản. Tiệm sẽ xác nhận khi nhận được tiền.</p>`;
         } else {
-            body.innerHTML = `<p>Số tiền cần thanh toán: <b>${money(amount)}</b></p>
+            body.innerHTML = `<p>${amountLabel} cần thanh toán: <b>${money(amount)}</b></p>${extra}
                 <p style="font-size:12px;color:var(--muted)">Nhân viên Mộc Anh sẽ liên hệ để hướng dẫn bạn thanh toán.</p>`;
         }
     } else {
-        getEl('#payTitle').textContent = 'Thanh toán trực tiếp';
-        body.innerHTML = `<p>Số tiền cần thanh toán: <b>${money(last.payableAmount)}</b></p>
+        body.innerHTML = `<p>Số tiền cần thanh toán: <b>${money(amount)}</b></p>${extra}
             <p style="font-size:12px;color:var(--muted)">Bạn thanh toán trực tiếp khi nhận hoa hoặc khi đến tiệm.</p>`;
     }
 });

@@ -26,17 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             getEl('#loading').hidden = true;
 
-            // Bị khóa bảo mật -> Yêu cầu nhập mã PIN
-            if (data.isLocked) {
-                getEl('#unlockSection').hidden = false;
-                getEl('#gift').hidden = true;
-                getEl('#unlockFrom').textContent = data.senderName ? 'Từ: ' + data.senderName : '';
-                getEl('#unlockHint').textContent = data.passwordHint ? 'Gợi ý: ' + data.passwordHint : 'Người gửi đã cài mật khẩu cho món quà này.';
-                return;
-            }
-
             // Đã mở khóa -> Hiện hoa
-            getEl('#unlockSection').hidden = true;
             getEl('#gift').hidden = false;
 
             getEl('#giftFrom').textContent = data.senderName ? 'Từ ' + data.senderName : '';
@@ -62,19 +52,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 media.appendChild(el);
             }
 
-            const collage = getEl('#giftCollage');
-            collage.innerHTML = '';
-            (data.items || []).forEach(i => {
-                const tile = document.createElement('div');
-                tile.className = 'mt-tile';
-                const im = document.createElement('img');
-                im.src = imgSrc(i.imageUrl); im.alt = i.name;
-                im.onerror = () => { im.onerror = null; im.src = PLACEHOLDER; };
-                const qty = document.createElement('span');
-                qty.textContent = i.name + ' × ' + i.quantity;
-                tile.append(im, qty);
-                collage.appendChild(tile);
-            });
+            // Ưu tiên ảnh bó hoa; chưa có thì hiện lưới ảnh nguyên liệu (chỉ ảnh, không chữ)
+            const bq = getEl('#giftBouquet'), collage = getEl('#giftCollage');
+            const bouquet = safeUpload(data.bouquetImageUrl);
+            if (bouquet) {
+                bq.src = bouquet; bq.hidden = false; collage.hidden = true;
+            } else {
+                bq.hidden = true; collage.hidden = false; collage.innerHTML = '';
+                (data.items || []).forEach(i => {
+                    const tile = document.createElement('div');
+                    tile.className = 'mt-tile';
+                    const im = document.createElement('img');
+                    im.src = imgSrc(i.imageUrl); im.alt = i.name; im.title = i.name;
+                    im.onerror = () => { im.onerror = null; im.src = PLACEHOLDER; };
+                    tile.appendChild(im);
+                    collage.appendChild(tile);
+                });
+            }
 
             getEl('#giftMeta').textContent = [data.productTypeName, data.style, data.themeColor].filter(Boolean).join(' · ');
 
@@ -82,34 +76,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     fetchAndRenderGift();
-
-    // Logic Submit mở khóa
-    const unlockForm = getEl('#unlockForm');
-    unlockForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = getEl('#unlockBtn');
-        const errEl = getEl('#unlockError');
-        const pwd = getEl('#unlockPwd').value.trim();
-
-        btn.disabled = true;
-        btn.textContent = 'Đang mở...';
-        errEl.style.display = 'none';
-
-        try {
-            const res = await fetch('/customer/gift/unlock', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: code, password: pwd })
-            });
-            let data = null; try { data = await res.json(); } catch (_) {}
-            if (!res.ok) throw new Error(data?.message || 'Mở khóa thất bại.');
-
-            await fetchAndRenderGift(); // Load lại data
-        } catch (error) {
-            errEl.textContent = error.message;
-            errEl.style.display = 'block';
-            btn.disabled = false;
-            btn.textContent = 'Mở khóa ngay';
-        }
-    });
 });
