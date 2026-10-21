@@ -50,3 +50,19 @@ uploads/
 *.db
 *.sqlite
 *.sqlite3
+
+# Files containing secrets
+.env
+.env.*
+!.env.example
+
+# Local Spring Boot configuration
+application.properties
+application-*.properties
+**/application.properties
+**/application-*.properties
+
+# Build output and local data
+target/
+uploads/
+data/
