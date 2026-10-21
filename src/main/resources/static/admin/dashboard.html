@@ -29,7 +29,7 @@
 <script>
   (async function () {
     const { api, esc, money } = Admin;
-    const TYPE = { PICKUP: 'Tự làm tại tiệm', DELIVERY: 'Mộc Anh làm giúp' };
+    const TYPE = { PICKUP: 'Tự làm tại tiệm', DELIVERY: 'Mộc Anh làm giúp', STUDIO_PICKUP: 'Mộc Anh làm giúp (đến nhận)', ONLINE: 'Gửi tặng online' };
     const ST = { PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', PREPARING: 'Đang chuẩn bị', IN_PROGRESS: 'Đang thực hiện',
                  AWAITING_APPROVAL: 'Chờ khách duyệt', READY: 'Sẵn sàng giao/nhận' };
     const hhmm = s => { const d = new Date(String(s).replace(' ', 'T')); return isNaN(d) ? '—' : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }); };

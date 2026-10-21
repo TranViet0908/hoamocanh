@@ -15,5 +15,6 @@ public record OrderLookupRes(
         BigDecimal depositAmount,
         LocalDateTime deliveryTime,
         String giftUrl,
-        String finishedImageUrl) {
+        String finishedImageUrl,
+        String bookingCode) {
 }

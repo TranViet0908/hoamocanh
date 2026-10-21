@@ -111,6 +111,14 @@ public class Order {
     @Column(name = "deposit_required", precision = 10, scale = 2)
     private BigDecimal depositRequired;
 
+    // Mã đặt lịch (đơn PICKUP), dạng DL-XXXXXX, để khách đọc cho nhân viên khi đến tiệm
+    @Column(name = "booking_code", length = 20, unique = true)
+    private String bookingCode;
+
+    // Ảnh các mẫu khách chọn ở Bước 5: mỗi dòng "url<TAB>tên mẫu"
+    @Column(name = "sample_images", columnDefinition = "TEXT")
+    private String sampleImages;
+
     @Column(name = "gift_password_hash")
     private String giftPasswordHash;
 

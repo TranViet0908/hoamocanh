@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function render(d) {
         box.hidden = false;
         $('#resCode').textContent = 'Mã đơn ' + d.orderCode;
+        $('#resBooking').textContent = d.bookingCode ? 'Mã đặt lịch: ' + d.bookingCode : '';
+        $('#resBooking').hidden = !d.bookingCode;
         $('#resStatus').textContent = 'Trạng thái: ' + (STATUS[d.status] || d.status);
         const dep = Number(d.depositAmount || 0);
         $('#resPay').textContent = `${PAY[d.paymentStatus] || d.paymentStatus} · Tổng ${money(d.payableAmount)}`
@@ -81,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else $('#qrWrap').hidden = true;
             $('#copyLink').onclick = async () => {
                 try { await navigator.clipboard.writeText(d.giftUrl); $('#copyLink').textContent = 'Đã sao chép ✓'; }
-                catch (_) { window.prompt('Sao chép link này:', d.giftUrl); }
+                catch (_) { showModal('Trình duyệt không cho tự sao chép. Hãy nhấn giữ vào đường link ở trên để sao chép.', { title: 'Sao chép link' }); }
             };
         }
     }

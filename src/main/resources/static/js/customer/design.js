@@ -571,7 +571,8 @@ async function runAutoFill(force = false) {
     if (!force && state.quantities.size > 0) return;
     // Khách đã tự chọn rồi thì hỏi trước khi thay bằng gợi ý
     if (force && state.quantities.size > 0 &&
-        !confirm('Gợi ý nhanh sẽ thay các nguyên liệu bạn đang chọn. Tiếp tục?')) return;
+        !(await showConfirm('Gợi ý nhanh sẽ thay các nguyên liệu bạn đang chọn. Tiếp tục?',
+            { title: 'Phối lại nguyên liệu', okText: 'Tiếp tục', cancelText: 'Giữ lựa chọn của tôi' }))) return;
     try {
         const params = new URLSearchParams({
             productType: state.productType.id,
@@ -593,7 +594,10 @@ async function runAutoFill(force = false) {
             saveDesignState();
             renderMaterials();
         }
-    } catch (_) {}
+    } catch (e) {
+        // Tự chạy ngầm thì bỏ qua lỗi; chỉ báo khi khách chủ động bấm nút
+        if (force) showModal((e && e.message) || 'Không gợi ý được nguyên liệu lúc này, vui lòng thử lại.', { type: 'error', title: 'Gợi ý nhanh' });
+    }
 }
 
 // ===== Điều hướng bước (Đồng bộ History API cho điện thoại) =====

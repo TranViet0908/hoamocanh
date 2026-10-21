@@ -4,12 +4,19 @@ import com.hoamocanh.core.entity.*;
 import com.hoamocanh.core.exception.ResourceNotFoundException;
 import com.hoamocanh.dto.admin.*;
 import com.hoamocanh.repository.*;
+import com.hoamocanh.core.util.QRCodeGenerator;
+import com.hoamocanh.service.notify.NotificationService;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @Service
@@ -26,6 +33,11 @@ public class AdminOrderService {
     private final OrderStatusHistoryRepository historyRepository;
     private final MaterialRepository materialRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final QRCodeGenerator qrCodeGenerator;
+
+    @Value("${app.upload-dir:uploads}")
+    private String uploadDir;
 
     // ---------- Trạng thái ----------
     /** Dữ liệu cũ: PROCESSING -> IN_PROGRESS, DELIVERED -> COMPLETED. */
@@ -121,6 +133,7 @@ public class AdminOrderService {
         orderRepository.save(o);
         historyRepository.save(OrderStatusHistory.builder()
                 .order(o).status(to).note(note).createdBy(staff(staffPhone)).build());
+        notificationService.statusChanged(o, to);   // giả lập: chỉ ghi log
         return toDetail(o);
     }
 
@@ -171,6 +184,71 @@ public class AdminOrderService {
         return toDetail(o);
     }
 
+    // ---------- Quản lý quà tặng online ----------
+    private static void requireGiftOrder(Order o) {
+        if (!"ONLINE".equals(o.getDeliveryType())) throw new IllegalArgumentException("Chỉ đơn gửi tặng online mới có quà tặng.");
+        if ("CANCELLED".equals(normalize(o.getStatus()))) throw new IllegalArgumentException("Đơn đã hủy.");
+    }
+
+    /** Gỡ một phần nội dung quà (message | image | video | bouquet) khi nội dung không phù hợp. File ảnh/video cũng bị xóa. */
+    @Transactional
+    public OrderDetailRes removeGiftContent(Integer id, String part, String staffPhone) {
+        orderRepository.lockById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng."));
+        Order o = find(id);
+        requireGiftOrder(o);
+        String oldFile = null, label;
+        String p = part == null ? "" : part;
+        if (p.equals("message")) { o.setGiftMessage(null); label = "lời chúc"; }
+        else if (p.equals("image")) { oldFile = o.getGiftImageUrl(); o.setGiftImageUrl(null); label = "ảnh kèm theo"; }
+        else if (p.equals("video")) { oldFile = o.getGiftVideoUrl(); o.setGiftVideoUrl(null); label = "video kèm theo"; }
+        else if (p.equals("bouquet")) { oldFile = o.getBouquetImageUrl(); o.setBouquetImageUrl(null); label = "hình mô phỏng"; }
+        else throw new IllegalArgumentException("Phần nội dung không hợp lệ.");
+        orderRepository.save(o);
+        historyRepository.save(OrderStatusHistory.builder().order(o).status(normalize(o.getStatus()))
+                .note("Đã gỡ " + label + " của quà tặng").createdBy(staff(staffPhone)).build());
+        deleteGiftFile(oldFile);
+        return toDetail(o);
+    }
+
+    /** Tạo lại link và mã QR quà tặng. Link cũ không còn mở được nữa. */
+    @Transactional
+    public OrderDetailRes regenerateGiftLink(Integer id, String staffPhone) {
+        orderRepository.lockById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng."));
+        Order o = find(id);
+        requireGiftOrder(o);
+        String token = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        o.setQrCodeUrl(qrCodeGenerator.generateGiftQRCode(token));
+        orderRepository.save(o);
+        historyRepository.save(OrderStatusHistory.builder().order(o).status(normalize(o.getStatus()))
+                .note("Đã tạo lại link và mã QR quà tặng (link cũ không còn dùng được)").createdBy(staff(staffPhone)).build());
+        return toDetail(o);
+    }
+
+    /** Xóa file trong /uploads/gift/ khỏi ổ đĩa; lỗi xóa file không làm hỏng thao tác chính. */
+    private void deleteGiftFile(String url) {
+        if (url == null || !url.startsWith("/uploads/gift/") || url.contains("..")) return;
+        try {
+            Path dir = Paths.get(uploadDir, "gift").toAbsolutePath().normalize();
+            Path file = dir.resolve(url.substring("/uploads/gift/".length())).normalize();
+            if (file.startsWith(dir)) Files.deleteIfExists(file);
+        } catch (IOException ignored) {
+            // file còn sót trên ổ đĩa, không ảnh hưởng nội dung đã gỡ khỏi đơn
+        }
+    }
+
+    /** Đọc các dòng "url<TAB>tên mẫu" đã lưu ở đơn. */
+    private static List<OrderDetailRes.Sample> parseSamples(String raw) {
+        if (raw == null || raw.isBlank()) return List.of();
+        List<OrderDetailRes.Sample> out = new ArrayList<>();
+        for (String line : raw.split("\n")) {
+            if (line.isBlank()) continue;
+            int t = line.indexOf('\t');
+            out.add(t < 0 ? new OrderDetailRes.Sample(line.trim(), "")
+                    : new OrderDetailRes.Sample(line.substring(0, t).trim(), line.substring(t + 1).trim()));
+        }
+        return out;
+    }
+
     // ---------- Tiện ích ----------
     private Order find(Integer id) {
         return orderRepository.findDetailById(id)
@@ -205,6 +283,7 @@ public class AdminOrderService {
                         h.getCreatedAt())).toList(),
                 nextStatuses(o.getDeliveryType(), status),
                 o.getBuyerName(), o.getBuyerPhone(), o.getShippingFee() == null ? BigDecimal.ZERO : o.getShippingFee(),
-                o.getDepositRequired(), o.getFinishedImageUrl());
+                o.getDepositRequired(), o.getFinishedImageUrl(), o.getBouquetImageUrl(), o.getBookingCode(),
+                parseSamples(o.getSampleImages()));
     }
 }

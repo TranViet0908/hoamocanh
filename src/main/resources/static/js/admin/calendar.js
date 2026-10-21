@@ -39,15 +39,17 @@
         const on = $('#strip .on'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
     }
 
-    const booking = b => `<a class="cl-bk" href="orders.html?id=${b.orderId}"><b>${esc(b.customerName)}</b> <small>· ${esc(b.code)} · ${esc(b.phone)}</small>
-        <div>${badge(ST[b.status] || [b.status, ''])}${badge(PAY[b.paymentStatus] || PAY.UNPAID)}</div></a>`;
+    const booking = b => `<a class="cl-bk" href="orders.html?id=${b.orderId}"><b>${esc(b.customerName)}</b> <small>· ${esc(b.bookingCode ? b.bookingCode + ' (' + b.code + ')' : b.code)} · ${esc(b.phone)}</small>
+        <div>${badge(ST[b.status] || [b.status, ''])}${badge(PAY[b.paymentStatus] || PAY.UNPAID)}${b.holdExpired ? badge(['Quá hạn giữ chỗ', 'bad']) : ''}</div></a>`;
 
     function renderDay() {
         const d = parse(day.date);
-        const total = day.slots.reduce((n, s) => n + s.bookings.length, 0) + day.outside.length;
+        // Chỉ tính lượt đang giữ chỗ (đơn chưa cọc mà quá hạn không còn chiếm chỗ, vẫn hiện trong danh sách)
+        const held = list => list.filter(x => !x.holdExpired).length;
+        const total = day.slots.reduce((n, s) => n + held(s.bookings), 0) + held(day.outside);
         $('#day').innerHTML = `<h2>${d.getDay() === 0 ? 'Chủ nhật' : 'Thứ ' + (d.getDay() + 1)}, ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}
             <span class="adm-muted" style="font:400 14px 'Be Vietnam Pro',sans-serif"> · ${total} lượt đặt</span></h2>
-          <div class="cl-grid">${day.slots.map(s => { const n = s.bookings.length, full = n >= s.capacity;
+          <div class="cl-grid">${day.slots.map(s => { const n = held(s.bookings), full = n >= s.capacity;
             return `<div class="cl-slot"><header><b>${s.start} – ${s.end}</b><span class="adm-badge ${full ? 'bad' : n ? 'warn' : 'ok'}">${full ? 'Đầy' : n + '/' + s.capacity + ' chỗ'}</span></header>
               <div class="cl-bar2"><span style="width:${Math.min(100, n / s.capacity * 100)}%"></span></div>
               ${n ? s.bookings.map(booking).join('') : '<p class="cl-empty">Chưa có khách đặt.</p>'}</div>`; }).join('')}

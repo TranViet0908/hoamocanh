@@ -41,6 +41,18 @@ public class AdminOrderController {
         return ResponseEntity.ok(orderService.setFinishedPhoto(id, body.get("url"), auth.getName()));
     }
 
+    // Gỡ lời chúc/ảnh/video/hình mô phỏng khỏi quà tặng: part = message | image | video | bouquet
+    @DeleteMapping("/{id}/gift-content")
+    public ResponseEntity<OrderDetailRes> removeGiftContent(@PathVariable Integer id, @RequestParam String part, Authentication auth) {
+        return ResponseEntity.ok(orderService.removeGiftContent(id, part, auth.getName()));
+    }
+
+    // Tạo lại link và mã QR quà tặng (link cũ hết hiệu lực)
+    @PostMapping("/{id}/gift-link/regenerate")
+    public ResponseEntity<OrderDetailRes> regenerateGiftLink(@PathVariable Integer id, Authentication auth) {
+        return ResponseEntity.ok(orderService.regenerateGiftLink(id, auth.getName()));
+    }
+
     @PostMapping("/{id}/payments")
     public ResponseEntity<OrderDetailRes> addPayment(@PathVariable Integer id,
                                                      @Valid @RequestBody PaymentReq req, Authentication auth) {

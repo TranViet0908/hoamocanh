@@ -20,5 +20,6 @@ public class OrderCheckoutRes {
     private BigDecimal shippingFee;   // phí giao hàng (đơn DELIVERY), đã nằm trong payableAmount
     private BigDecimal depositAmount; // tiền cọc giữ chỗ (đơn PICKUP), null nếu không cần cọc
     private BigDecimal payNowAmount;  // số tiền cần trả ngay: tiền cọc nếu có, không thì toàn bộ
+    private String bookingCode;   // mã đặt lịch (đơn PICKUP), null với hình thức khác
     private java.time.LocalDateTime holdUntil; // hạn giữ chỗ nếu chưa nhận được cọc (đơn PICKUP)
 }

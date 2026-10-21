@@ -81,6 +81,7 @@ public class AdminDashboardService {
 
     private static BigDecimal payable(Order o) {
         BigDecimal d = o.getDiscountAmount() == null ? BigDecimal.ZERO : o.getDiscountAmount();
-        return o.getTotalPrice().subtract(d).max(BigDecimal.ZERO);
+        BigDecimal ship = o.getShippingFee() == null ? BigDecimal.ZERO : o.getShippingFee();   // phí giao hàng cũng là tiền khách trả
+        return o.getTotalPrice().subtract(d).add(ship).max(BigDecimal.ZERO);
     }
 }

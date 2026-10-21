@@ -20,10 +20,10 @@
     <div class="flow-shell">
         <p class="eyebrow">Tra cứu</p>
         <h2>Đơn hàng <i>của bạn</i></h2>
-        <p class="mt-hint">Nhập mã đơn (dạng MA-123) và số điện thoại đã dùng khi đặt.</p>
+        <p class="mt-hint">Nhập mã đơn (dạng MA-123) hoặc mã đặt lịch (dạng DL-XXXXXX) và số điện thoại đã dùng khi đặt.</p>
 
         <form id="lookupForm" novalidate onsubmit="return false;">
-            <label>Mã đơn<input name="code" required autocomplete="off" placeholder="MA-123"></label>
+            <label>Mã đơn hoặc mã đặt lịch<input name="code" required autocomplete="off" placeholder="MA-123 hoặc DL-XXXXXX"></label>
             <label>Số điện thoại<input name="phone" type="tel" required inputmode="tel" autocomplete="tel"></label>
             <button class="button button-dark" type="submit">Tra cứu →</button>
         </form>
@@ -32,6 +32,7 @@
 
         <div class="mt-box" id="result" hidden style="margin-top:24px">
             <h4 id="resCode"></h4>
+            <p id="resBooking" hidden></p>
             <p id="resStatus"></p>
             <p id="resPay"></p>
             <p id="resTime" hidden></p>
@@ -59,6 +60,8 @@
     </div>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="/js/customer/modal.js?v=20261020"></script>
 <script src="/js/customer/order-lookup.js"></script>
+<script src="/js/customer/contact-fab.js"></script>
 </body>
 </html>

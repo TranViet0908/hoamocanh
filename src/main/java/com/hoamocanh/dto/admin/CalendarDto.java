@@ -18,8 +18,10 @@ public final class CalendarDto {
     /** Khung giờ khách thấy khi đặt lịch. */
     public record PublicSlot(String start, String label, int remaining, boolean available) { }
 
+    /** bookingCode: mã đặt lịch DL-XXXXXX; holdExpired: chưa cọc và đã quá hạn giữ chỗ (không còn chiếm chỗ). */
     public record Booking(Integer orderId, String code, String customerName, String phone,
-                          String status, String paymentStatus, LocalDateTime time) { }
+                          String status, String paymentStatus, LocalDateTime time,
+                          String bookingCode, boolean holdExpired) { }
 
     public record AdminSlot(String start, String end, int capacity, List<Booking> bookings) { }
 

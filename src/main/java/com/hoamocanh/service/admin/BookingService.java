@@ -131,15 +131,16 @@ public class BookingService {
     public DayRes day(LocalDate date) {
         BookingConfig c = getConfig();
         List<Order> orders = orderRepository.findPickupBetween(date.atStartOfDay(), date.plusDays(1).atStartOfDay());
+        LocalDateTime holdCutoff = LocalDateTime.now().minusMinutes(feeService.holdMinutes());
         Set<Integer> placed = new HashSet<>();
         List<AdminSlot> slots = new ArrayList<>();
         for (LocalTime st : starts(c)) {
             LocalDateTime s = date.atTime(st), e = s.plusMinutes(c.slotMinutes());
-            List<Booking> in = orders.stream().filter(o -> inSlot(o, s, e)).peek(o -> placed.add(o.getId())).map(BookingService::toBooking).toList();
+            List<Booking> in = orders.stream().filter(o -> inSlot(o, s, e)).peek(o -> placed.add(o.getId())).map(o -> toBooking(o, holdCutoff)).toList();
             slots.add(new AdminSlot(st.format(HHMM), e.toLocalTime().format(HHMM), c.capacity(), in));
         }
         // Đơn đặt trước khi có lịch (khách tự nhập giờ) có thể nằm ngoài khung
-        List<Booking> outside = orders.stream().filter(o -> !placed.contains(o.getId())).map(BookingService::toBooking).toList();
+        List<Booking> outside = orders.stream().filter(o -> !placed.contains(o.getId())).map(o -> toBooking(o, holdCutoff)).toList();
         return new DayRes(date.toString(), slots, outside, c);
     }
 
@@ -148,7 +149,9 @@ public class BookingService {
         int n = Math.max(1, Math.min(days, 60));
         BookingConfig c = getConfig();
         int cap = c.capacity() * starts(c).size();
-        Map<LocalDate, Long> cnt = orderRepository.findPickupBetween(from.atStartOfDay(), from.plusDays(n).atStartOfDay()).stream()
+        // Chỉ đếm chỗ đang được giữ (đã cọc hoặc còn hạn giữ chỗ), khớp với số chỗ khách nhìn thấy
+        Map<LocalDate, Long> cnt = orderRepository.findHeldPickupBetween(from.atStartOfDay(), from.plusDays(n).atStartOfDay(),
+                        LocalDateTime.now().minusMinutes(feeService.holdMinutes())).stream()
                 .collect(Collectors.groupingBy(o -> o.getDeliveryTime().toLocalDate(), Collectors.counting()));
         List<DaySummary> out = new ArrayList<>();
         for (int i = 0; i < n; i++) {
@@ -158,9 +161,10 @@ public class BookingService {
         return out;
     }
 
-    private static Booking toBooking(Order o) {
+    private static Booking toBooking(Order o, LocalDateTime holdCutoff) {
+        String pay = o.getPaymentStatus() == null ? "UNPAID" : o.getPaymentStatus();
+        boolean expired = "UNPAID".equals(pay) && o.getCreatedAt() != null && o.getCreatedAt().isBefore(holdCutoff);
         return new Booking(o.getId(), "MA-" + o.getId(), o.getReceiverName(), o.getReceiverPhone(),
-                AdminOrderService.normalize(o.getStatus()),
-                o.getPaymentStatus() == null ? "UNPAID" : o.getPaymentStatus(), o.getDeliveryTime());
+                AdminOrderService.normalize(o.getStatus()), pay, o.getDeliveryTime(), o.getBookingCode(), expired);
     }
 }

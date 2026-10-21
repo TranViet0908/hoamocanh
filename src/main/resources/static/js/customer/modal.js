@@ -9,7 +9,9 @@
     .ma-modal-icon.success{background:#4f9d69}.ma-modal-icon.error{background:#c0453a}.ma-modal-icon.info{background:#8a6f5a}
     .ma-modal h4{margin:0 0 8px;font:500 24px 'Playfair Display',Georgia,serif}
     .ma-modal p{margin:0 0 20px;line-height:1.6;color:#555;white-space:pre-line}
-    .ma-modal button{width:100%;padding:12px;border:0;border-radius:0;background:var(--ink,#29332f);color:#fff;font-size:13px;letter-spacing:.4px;cursor:pointer}`;
+    .ma-modal button{width:100%;padding:12px;border:0;border-radius:0;background:var(--ink,#29332f);color:#fff;font-size:13px;letter-spacing:.4px;cursor:pointer}
+    .ma-modal .ma-actions{display:flex;gap:10px}
+    .ma-modal button.ma-secondary{background:#fff;color:var(--ink,#29332f);border:1px solid var(--ink,#29332f)}`;
     const style = document.createElement('style');
     style.textContent = css;
     document.head.appendChild(style);
@@ -48,6 +50,44 @@
             document.addEventListener('keydown', onKey);
             btn.onclick = close;
             overlay.onclick = e => { if (e.target === overlay) close(); };
+        });
+    };
+
+    // showConfirm(message, {type, title, okText, cancelText}) -> Promise<boolean>, thay cho confirm() của trình duyệt
+    window.showConfirm = function (message, opts = {}) {
+        const type = opts.type || 'info';
+        return new Promise(resolve => {
+            const overlay = document.createElement('div');
+            overlay.className = 'ma-modal-overlay';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+
+            const box = document.createElement('div');
+            box.className = 'ma-modal';
+            box.innerHTML = '<div class="ma-modal-icon ' + type + '"></div><h4></h4><p></p>' +
+                '<div class="ma-actions"><button type="button" class="ma-secondary"></button><button type="button" class="ma-ok"></button></div>';
+            box.querySelector('.ma-modal-icon').textContent = ICONS[type];
+            box.querySelector('h4').textContent = opts.title || 'Xác nhận';
+            box.querySelector('p').textContent = message;
+            const cancel = box.querySelector('.ma-secondary'), ok = box.querySelector('.ma-ok');
+            cancel.textContent = opts.cancelText || 'Hủy';
+            ok.textContent = opts.okText || 'Đồng ý';
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => overlay.classList.add('show'));
+            ok.focus();
+
+            const done = value => {
+                document.removeEventListener('keydown', onKey);
+                overlay.classList.remove('show');
+                setTimeout(() => overlay.remove(), 200);
+                resolve(value);
+            };
+            const onKey = e => { if (e.key === 'Escape') done(false); };
+            document.addEventListener('keydown', onKey);
+            ok.onclick = () => done(true);
+            cancel.onclick = () => done(false);
+            overlay.onclick = e => { if (e.target === overlay) done(false); };
         });
     };
 })();

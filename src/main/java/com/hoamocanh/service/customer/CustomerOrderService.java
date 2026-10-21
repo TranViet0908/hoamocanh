@@ -15,6 +15,7 @@ import com.hoamocanh.repository.OrderRepository;
 import com.hoamocanh.repository.OrderStatusHistoryRepository;
 import com.hoamocanh.repository.ProductTypeRepository;
 import com.hoamocanh.service.admin.BookingService;
+import com.hoamocanh.service.notify.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +53,7 @@ public class CustomerOrderService {
     private final QRCodeGenerator qrCodeGenerator;
     private final BookingService bookingService;
     private final OrderFeeService feeService;
+    private final NotificationService notificationService;
 
     private static boolean blank(String s) {
         return s == null || s.trim().isEmpty();
@@ -69,6 +72,19 @@ public class CustomerOrderService {
         BigDecimal d = o.getDiscountAmount() == null ? BigDecimal.ZERO : o.getDiscountAmount();
         BigDecimal ship = o.getShippingFee() == null ? BigDecimal.ZERO : o.getShippingFee();
         return o.getTotalPrice().subtract(d).add(ship).max(BigDecimal.ZERO);
+    }
+
+    /** Lưu danh sách mẫu thành các dòng "url<TAB>chú thích" (chú thích tối đa 150 ký tự). */
+    private static String encodeSamples(List<CheckoutReq.SampleImage> list) {
+        if (list == null || list.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        for (CheckoutReq.SampleImage s : list) {
+            String cap = s.getCaption() == null ? "" : s.getCaption().replaceAll("[\\t\\r\\n]+", " ").trim();
+            if (cap.length() > 150) cap = cap.substring(0, 150);
+            if (sb.length() > 0) sb.append('\n');
+            sb.append(s.getUrl().trim()).append('\t').append(cap);
+        }
+        return sb.toString();
     }
 
     private void validateRequest(CheckoutReq req) {
@@ -114,6 +130,14 @@ public class CustomerOrderService {
         for (String url : new String[]{req.getGiftImageUrl(), req.getGiftVideoUrl(), req.getBouquetImageUrl()}) {
             if (!blank(url) && (!url.startsWith(GIFT_UPLOAD_PREFIX) || url.contains(".."))) {
                 throw new IllegalArgumentException("Ảnh/video đính kèm không hợp lệ.");
+            }
+        }
+        if (req.getSampleImages() != null) {
+            if (req.getSampleImages().size() > 4) throw new IllegalArgumentException("Quá nhiều ảnh mẫu đính kèm.");
+            for (CheckoutReq.SampleImage s : req.getSampleImages()) {
+                if (s == null || blank(s.getUrl()) || !s.getUrl().startsWith(GIFT_UPLOAD_PREFIX) || s.getUrl().contains("..")) {
+                    throw new IllegalArgumentException("Ảnh mẫu đính kèm không hợp lệ.");
+                }
             }
         }
         if ("DELIVERY".equals(req.getDeliveryType()) && blank(req.getShippingAddress())) {
@@ -163,6 +187,9 @@ public class CustomerOrderService {
         // 3. Chặn bypass giao diện: kiểm tra định mức, kho, tổng tiền, danh mục hợp lệ
         designService.validateDesignCart(req.getProductTypeId(), req.getBudgetLevel(), itemMap);
 
+        // Mã đặt lịch riêng cho đơn tự làm tại tiệm
+        String bookingCode = "PICKUP".equals(req.getDeliveryType()) ? newBookingCode() : null;
+
         // 4. Khởi tạo Order
         Order order = Order.builder()
                 .receiverName(req.getReceiverName().trim())
@@ -174,13 +201,15 @@ public class CustomerOrderService {
                 .deliveryType(req.getDeliveryType())
                 .shippingAddress(req.getShippingAddress())
                 .deliveryTime(req.getDeliveryTime())
+                .bookingCode(bookingCode)
+                .sampleImages(encodeSamples(req.getSampleImages()))
                 .style(req.getStyle())
                 .themeColor(req.getThemeColor())
                 .styleNote(req.getStyleNote())
                 .giftMessage(req.getGiftMessage())
                 .giftImageUrl(req.getGiftImageUrl())
                 .giftVideoUrl(req.getGiftVideoUrl())
-                .bouquetImageUrl("ONLINE".equals(req.getDeliveryType()) ? req.getBouquetImageUrl() : null)
+                .bouquetImageUrl(blank(req.getBouquetImageUrl()) ? null : req.getBouquetImageUrl())   // mọi loại đơn: trang quà (ONLINE) và nhân viên xem thiết kế
                 .paymentMethod(req.getPaymentMethod())
                 .status("PENDING")
                 .paymentStatus("UNPAID")
@@ -260,6 +289,8 @@ public class CustomerOrderService {
         LocalDateTime holdUntil = deposit == null ? null
                 : (saved.getCreatedAt() != null ? saved.getCreatedAt() : LocalDateTime.now()).plusMinutes(fees.holdMinutes());
 
+        notificationService.orderCreated(saved, payable);   // giả lập: chỉ ghi log
+
         return OrderCheckoutRes.builder()
                 .orderId(saved.getId())
                 .orderCode(orderCode)
@@ -271,6 +302,7 @@ public class CustomerOrderService {
                 .depositAmount(deposit)
                 .payNowAmount(deposit != null ? deposit : payable)
                 .holdUntil(holdUntil)
+                .bookingCode(saved.getBookingCode())
                 .qrCodeUrl(giftUrl)
                 .message("Đơn hàng đã được ghi nhận.")
                 .build();
@@ -313,9 +345,17 @@ public class CustomerOrderService {
     /** Tìm đơn theo mã + số điện thoại (người nhận hoặc người đặt). Sai thông tin luôn trả cùng một thông báo. */
     private Order findOwned(String orderCode, String phone, boolean lock) {
         String notFound = "Không tìm thấy đơn hàng. Vui lòng kiểm tra lại mã đơn và số điện thoại.";
-        String digits = orderCode == null ? "" : orderCode.trim().toUpperCase(Locale.ROOT).replaceFirst("^MA-?", "");
-        if (!digits.matches("\\d{1,9}") || blank(phone)) throw new ResourceNotFoundException(notFound);
-        int id = Integer.parseInt(digits);
+        String raw = orderCode == null ? "" : orderCode.trim().toUpperCase(Locale.ROOT).replaceAll("\\s", "");
+        if (blank(phone)) throw new ResourceNotFoundException(notFound);
+        int id;
+        if (raw.startsWith("DL")) {   // mã đặt lịch, dạng DL-XXXXXX
+            String bc = raw.startsWith("DL-") ? raw : "DL-" + raw.substring(2);
+            id = orderRepository.findByBookingCode(bc).map(Order::getId).orElseThrow(() -> new ResourceNotFoundException(notFound));
+        } else {                      // mã đơn, dạng MA-123
+            String digits = raw.replaceFirst("^MA-?", "");
+            if (!digits.matches("\\d{1,9}")) throw new ResourceNotFoundException(notFound);
+            id = Integer.parseInt(digits);
+        }
         Order o = (lock ? orderRepository.lockById(id) : orderRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException(notFound));
         String p = normPhone(phone);
@@ -332,7 +372,20 @@ public class CustomerOrderService {
                 o.getPaymentStatus() == null ? "UNPAID" : o.getPaymentStatus(), o.getPaymentMethod(),
                 payableOf(o), o.getShippingFee(), o.getDepositRequired(), o.getDeliveryTime(),
                 "ONLINE".equals(o.getDeliveryType()) ? o.getQrCodeUrl() : null,
-                showPhoto ? o.getFinishedImageUrl() : null);
+                showPhoto ? o.getFinishedImageUrl() : null, o.getBookingCode());
+    }
+
+    private static final String BOOKING_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // bỏ ký tự dễ nhầm: I, O, 0, 1
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    /** Sinh mã đặt lịch DL-XXXXXX chưa trùng đơn nào. */
+    private String newBookingCode() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            StringBuilder sb = new StringBuilder("DL-");
+            for (int i = 0; i < 6; i++) sb.append(BOOKING_CHARS.charAt(RANDOM.nextInt(BOOKING_CHARS.length())));
+            if (!orderRepository.existsByBookingCode(sb.toString())) return sb.toString();
+        }
+        throw new IllegalStateException("Không tạo được mã đặt lịch, vui lòng thử lại.");
     }
 
     private static String normPhone(String p) {

@@ -35,6 +35,10 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             + "AND (COALESCE(o.paymentStatus, 'UNPAID') <> 'UNPAID' OR o.createdAt >= :holdCutoff) ORDER BY o.deliveryTime, o.id")
     List<Order> findHeldPickupBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, @Param("holdCutoff") LocalDateTime holdCutoff);
 
+    Optional<Order> findByBookingCode(String bookingCode);
+
+    boolean existsByBookingCode(String bookingCode);
+
     // Lịch trải nghiệm: đơn khách tự làm tại tiệm (PICKUP) chưa hủy, hẹn trong khoảng [from, to)
     @Query("SELECT o FROM Order o WHERE o.deliveryType = 'PICKUP' AND o.status <> 'CANCELLED' AND o.deliveryTime >= :from AND o.deliveryTime < :to ORDER BY o.deliveryTime, o.id")
     List<Order> findPickupBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);

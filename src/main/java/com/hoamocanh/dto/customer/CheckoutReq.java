@@ -40,6 +40,15 @@ public class CheckoutReq {
     // Khuyến mãi
     private String voucherCode;
 
+    // Các mẫu khách đã chọn ở Bước 5 (tối đa 4): ảnh đã tải lên /uploads/gift/ cùng tên mẫu
+    private List<SampleImage> sampleImages;
+
+    @Data
+    public static class SampleImage {
+        private String caption;
+        private String url;
+    }
+
     // Giỏ hoa khách tự thiết kế
     private List<DesignItemReq> items;
 }

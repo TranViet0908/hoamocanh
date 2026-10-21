@@ -11,7 +11,10 @@ public record OrderDetailRes(
         BigDecimal totalPrice, BigDecimal discountAmount, BigDecimal payable, BigDecimal paid,
         String giftMessage, String giftImageUrl, String giftVideoUrl, String giftUrl,
         List<Item> items, List<Pay> payments, List<Hist> history, List<String> nextStatuses,
-        String buyerName, String buyerPhone, BigDecimal shippingFee, BigDecimal depositRequired, String finishedImageUrl) {
+        String buyerName, String buyerPhone, BigDecimal shippingFee, BigDecimal depositRequired, String finishedImageUrl,
+        String bouquetImageUrl, String bookingCode, List<Sample> sampleImages) {
+
+    public record Sample(String url, String caption) { }
 
     public record Item(String name, Integer quantity, BigDecimal unitPrice, String imageUrl) { }
 

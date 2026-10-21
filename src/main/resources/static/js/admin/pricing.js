@@ -7,13 +7,13 @@
     const { page, user } = await Admin.mount({ active: 'pricing.html', title: 'Mức giá & định mức' });
     if (user.role !== 'ADMIN') { page.innerHTML = '<div class="adm-card adm-muted">Chỉ quản trị viên được xem trang này.</div>'; return; }
 
-    let rules = [], types = [], cats = [], tab = 'rules';
+    let rules = [], types = [], cats = [], fees = null, tab = 'rules';
     page.innerHTML = `<div class="pr-tabs" id="tabs"></div><div id="pane"></div>`;
     const $ = s => page.querySelector(s);
     const num = v => v === '' ? null : Number(v);
 
     async function load() {
-        [rules, types, cats] = await Promise.all([api('/pricing/budget-rules'), api('/pricing/product-types'), api('/pricing/categories')]);
+        [rules, types, cats, fees] = await Promise.all([api('/pricing/budget-rules'), api('/pricing/product-types'), api('/pricing/categories'), api('/pricing/fees')]);
         render();
     }
     const groupOptions = sel => Object.entries(GROUPS).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${v}</option>`).join('');
@@ -68,10 +68,30 @@
           </tbody></table></div>`;
     }
 
+    // ---------- Tab 4: phí & cọc ----------
+    const pct = r => Math.round(Number(r) * 100);
+    const matCap = (level, laborPct) => Math.floor(level * (1 - laborPct / 100) / 1000 + 1e-9) * 1000;
+    function viewFees() {
+        return `<div class="pr-note"><b>Tỷ lệ nhân sự và lợi nhuận</b> là phần giá dành cho công thực hiện, hướng dẫn tại tiệm và lãi; phần còn lại là <b>tiền nguyên liệu tối đa</b> khách được chọn.
+            <b>Cọc</b> áp dụng cho đơn tự làm tại tiệm. <b>Phí giao hàng</b> chỉ cộng vào đơn giao tận nơi. Sửa xong bấm Lưu, đơn mới áp dụng ngay, đơn cũ giữ nguyên.</div>
+          <div class="adm-card"><form id="feesForm" class="pr-row" novalidate>
+            <label>Nhân sự + lợi nhuận (%)<input class="adm-input" style="width:140px" name="labor" type="number" min="0" max="90" step="1" value="${pct(fees.laborRatio)}"></label>
+            <label>Tỷ lệ cọc (%)<input class="adm-input" style="width:140px" name="deposit" type="number" min="5" max="100" step="1" value="${pct(fees.depositRatio)}"></label>
+            <label>Phí giao hàng (đ)<input class="adm-input" style="width:160px" name="ship" type="number" min="0" max="1000000" step="1000" value="${Number(fees.shipFee)}"></label>
+            <label>Giữ chỗ khi chưa cọc (phút)<input class="adm-input" style="width:160px" name="hold" type="number" min="5" max="1440" step="5" value="${fees.holdMinutes}"></label>
+            <button class="adm-btn primary" type="submit">Lưu</button></form>
+            <p class="adm-muted" id="feesEx" style="margin:10px 0 0;font-size:12px"></p></div>`;
+    }
+    function feesExample() {
+        const f = pane.querySelector('#feesForm'), ex = pane.querySelector('#feesEx');
+        if (f && ex) ex.textContent = `Ví dụ gói 500.000đ: tiền nguyên liệu tối đa ${money(matCap(500000, Number(f.elements.labor.value) || 0))}.`;
+    }
+
     function render() {
-        $('#tabs').innerHTML = [['rules', 'Mức giá & định mức'], ['types', 'Loại sản phẩm'], ['cats', 'Danh mục & nhóm']]
+        $('#tabs').innerHTML = [['rules', 'Mức giá & định mức'], ['types', 'Loại sản phẩm'], ['cats', 'Danh mục & nhóm'], ['fees', 'Phí & cọc']]
             .map(([k, t]) => `<button type="button" data-tab="${k}" class="${k === tab ? 'on' : ''}">${t}</button>`).join('');
-        $('#pane').innerHTML = { rules: viewRules, types: viewTypes, cats: viewCats }[tab]();
+        $('#pane').innerHTML = { rules: viewRules, types: viewTypes, cats: viewCats, fees: viewFees }[tab]();
+        if (tab === 'fees') feesExample();
     }
 
     // ---------- Sự kiện ----------
@@ -84,6 +104,7 @@
     };
 
     pane.addEventListener('input', e => {   // có thay đổi thì mới bật nút Lưu của dòng đó
+        if (e.target.closest('#feesForm')) return feesExample();
         const row = e.target.closest('tr[data-id]');
         if (row) row.querySelector('.pr-save').disabled = false;
     });
@@ -113,6 +134,10 @@
             const v = read(e.target.querySelector('.pr-row') || e.target);
             const level = num(e.target.elements.level.value);
             guard(btn, async () => { await api('/pricing/budget-rules', { method: 'POST', body: { budgetLevel: level, ...v } }); toast('Đã thêm mức giá.', 'ok'); });
+        } else if (e.target.id === 'feesForm') {
+            const f = e.target.elements;
+            guard(btn, async () => { await api('/pricing/fees', { method: 'PUT', body: { laborRatio: Number(f.labor.value) / 100, depositRatio: Number(f.deposit.value) / 100,
+                shipFee: Number(f.ship.value), holdMinutes: Number(f.hold.value) } }); toast('Đã lưu phí và cọc.', 'ok'); });
         } else if (e.target.id === 'newCat') {
             const f = e.target.elements;
             guard(btn, async () => { await api('/pricing/categories', { method: 'POST', body: { name: f.name.value.trim(), designGroup: f.group.value, description: f.description.value.trim() || null } }); toast('Đã thêm danh mục.', 'ok'); });

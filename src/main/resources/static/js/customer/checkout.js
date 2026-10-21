@@ -16,7 +16,7 @@ const MODES = {
     PICKUP:   { hint: 'Bạn đặt lịch đến tiệm, nhận nguyên liệu và được florist hướng dẫn hoàn thiện sản phẩm.',
                 time: true, timeLabel: 'Thời gian bạn đến tiệm', address: false, gift: false },
     DELIVERY: { hint: 'Mộc Anh kiểm tra nguyên liệu, thực hiện sản phẩm theo thiết kế rồi giao đến địa chỉ của bạn.',
-                time: true, timeLabel: 'Thời gian muốn nhận hoa', address: true, gift: false }
+                time: true, timeLabel: 'Thời gian muốn nhận hoa', address: true, gift: false, card: true }
 };
 
 // Khớp CheckoutReq.paymentMethod: CASH | ONLINE
@@ -28,12 +28,17 @@ const PAY_HINTS = {
 const FORM_LABELS = { round: 'Bó tròn', natural: 'Bó tự nhiên', long: 'Bó dài' };
 const MIX_LABELS = { 'rose-baby': 'Hồng + baby', 'rose-daisy': 'Hồng + cúc', 'tulip-baby': 'Tulip + baby' };
 
+// Tóm tắt kết quả mô phỏng ở Bước 5 (chế độ, mẫu khách chọn, mô tả) để tiệm biết khách chọn gì.
+// Dữ liệu lấy từ extractColleagueSimulationSummary() trong design.js: { mode, kind, summary, samples[], imageUrl }.
 function formatSimSummary(sim) {
     if (!sim) return '';
-    const mix = MIX_LABELS[sim.mix] || sim.mix || '';
-    const form = FORM_LABELS[sim.form] || sim.form || '';
-    return [mix, form, sim.flowerColor ? `Hoa ${sim.flowerColor}` : '', sim.paperColor ? `Giấy ${sim.paperColor}` : '', sim.ribbonColor ? `Nơ ${sim.ribbonColor}` : '']
-        .filter(Boolean).join(' · ');
+    const clean = v => String(v || '').replace(/\s+/g, ' ').trim();
+    const parts = [clean(sim.mode), clean(sim.kind)];
+    const samples = Array.isArray(sim.samples) ? sim.samples.map(clean).filter(Boolean) : [];
+    if (samples.length) parts.push('Mẫu đã chọn: ' + samples.join('; '));
+    const summary = clean(sim.summary);
+    if (summary) parts.push(summary.length > 300 ? summary.slice(0, 297) + '...' : summary);
+    return parts.filter(Boolean).join(' · ').slice(0, 500);   // giữ ghi chú tổng dưới giới hạn 1000 ký tự của server
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -91,8 +96,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const fields = {
         time: { box: form.querySelector('#fieldTime'), input: form.elements.time },
         address: { box: form.querySelector('#fieldAddress'), input: form.elements.address },
-        gift: { box: form.querySelector('#fieldGift'), input: form.elements.gift }
+        gift: { box: form.querySelector('#fieldGift'), input: form.elements.gift },
+        card: { box: form.querySelector('#fieldCard'), input: form.elements.card }
     };
+
+    // ----- Hình mô phỏng: nhận mọi định dạng ảnh, định dạng lạ thì vẽ lại thành JPEG trước khi tải lên -----
+    const SIM_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+    function toJpeg(blob) {
+        return new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(blob), img = new Image();
+            img.onload = () => {
+                const c = document.createElement('canvas');
+                c.width = img.naturalWidth || 800; c.height = img.naturalHeight || 800;
+                const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0);
+                URL.revokeObjectURL(url);
+                c.toBlob(x => x ? resolve(x) : reject(new Error('Không chuyển được định dạng ảnh.')), 'image/jpeg', 0.85);
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Không đọc được ảnh.')); };
+            img.src = url;
+        });
+    }
+    async function uploadSimulation(src) {
+        let blob = await (await fetch(src)).blob();
+        let ext = SIM_EXT[blob.type];
+        if (!ext) { blob = await toJpeg(blob); ext = 'jpg'; }
+        const up = new FormData();
+        up.append('file', blob, 'bouquet.' + ext);
+        const ur = await fetch(`${API_BASE}/uploads/gift`, { method: 'POST', body: up });
+        let ud = null; try { ud = await ur.json(); } catch (_) {}
+        if (!ur.ok) throw new Error(ud?.message || `Lỗi máy chủ (${ur.status})`);
+        if (ud.type !== 'image') throw new Error('Sai loại tệp.');
+        return ud.url;
+    }
 
     // ----- Đặt lịch đến tiệm (PICKUP): chọn ngày rồi chọn khung giờ còn chỗ -----
     let picker = null;
@@ -180,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         outputType = mode;
         const cfg = MODES[mode];
         document.querySelector('#outputHint').textContent = cfg.hint;
-        ['time', 'address', 'gift'].forEach(k => {
+        ['time', 'address', 'gift', 'card'].forEach(k => {
             fields[k].box.hidden = !cfg[k];
             if (!cfg[k]) fields[k].input.value = '';
         });
@@ -270,6 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const address = String(fd.get('address') || '').trim();
         const note = String(fd.get('note') || '').trim();
         const giftMsg = String(fd.get('gift') || '').trim();
+        const cardMsg = MODES[outputType].card ? String(fd.get('card') || '').trim() : '';
         const voucher = String(fd.get('voucher') || '').trim();
 
         const buyerOn = outputType === 'DELIVERY' && document.querySelector('#buyerOther').checked;
@@ -303,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
             buyerPhone: buyerPhone || null,
             shippingAddress: needAddress() ? address : null,
             deliveryTime: MODES[outputType].time ? fd.get('time') : null,
-            giftMessage: gift ? (giftMsg || null) : null,
+            giftMessage: gift ? (giftMsg || null) : (cardMsg || null),   // ONLINE: lời chúc; Mộc Anh làm giúp: nội dung thiệp
             giftImageUrl: gift ? media.image : null,
             giftVideoUrl: gift ? media.video : null,
             voucherCode: voucher || null,
@@ -315,19 +351,25 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.textContent = 'Đang gửi...';
 
         try {
-            // Quà online: tải ảnh bó hoa mô phỏng lên để trang quà hiển thị
+            // Tải hình mô phỏng đã chốt ở Bước 5 lên cho MỌI loại đơn: trang quà (ONLINE) và nhân viên xem thiết kế đều dùng
             let bouquetImageUrl = null;
-            if (gift && simImg && String(simImg).startsWith('data:')) {
-                try {
-                    const blob = await (await fetch(simImg)).blob();
-                    const up = new FormData();
-                    up.append('file', blob, 'bouquet.jpg');
-                    const ur = await fetch(`${API_BASE}/uploads/gift`, { method: 'POST', body: up });
-                    const ud = await ur.json();
-                    if (ur.ok && ud.type === 'image') bouquetImageUrl = ud.url;
-                } catch (_) { /* không có ảnh thì trang quà hiện lưới nguyên liệu */ }
+            if (simImg) {
+                try { bouquetImageUrl = await uploadSimulation(simImg); }
+                catch (err) {
+                    await showModal('Chưa lưu được hình mô phỏng (' + err.message + '). Đơn của bạn vẫn được gửi, tiệm sẽ dựa vào danh sách nguyên liệu.',
+                        { type: 'error', title: 'Hình mô phỏng' });
+                }
             }
             payload.bouquetImageUrl = bouquetImageUrl;
+
+            // Ảnh các mẫu khách đã chọn ở Bước 5 (tối đa 2): sao chép lên máy chủ để tiệm xem lại dù thư viện mẫu có thay đổi.
+            // Mẫu nào tải lỗi thì bỏ qua, đơn vẫn gửi (tên mẫu vẫn nằm trong ghi chú đơn).
+            const sampleImages = [];
+            const picked = orderData.simulation && Array.isArray(orderData.simulation.sampleImages) ? orderData.simulation.sampleImages.slice(0, 2) : [];
+            for (const s of picked) {
+                try { sampleImages.push({ caption: s.caption || '', url: await uploadSimulation(s.url) }); } catch (_) { /* bỏ qua mẫu lỗi */ }
+            }
+            payload.sampleImages = sampleImages;
 
             const res = await fetch(`${API_BASE}/orders/checkout`, {
                 method: 'POST',
@@ -340,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             sessionStorage.setItem('lastOrder', JSON.stringify({
                 orderCode: data.orderCode,
+                bookingCode: data.bookingCode || null,
                 deliveryType: effectiveType(),
                 paymentMethod: data.paymentMethod,
                 payableAmount: data.payableAmount,

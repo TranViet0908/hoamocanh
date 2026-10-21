@@ -76,8 +76,10 @@ public class AdminMaterialService {
         return MaterialRes.from(materialRepository.save(m));
     }
 
+    // Khóa dòng nguyên liệu khi sửa: Hibernate ghi lại cả cột tồn kho, nên không khóa thì lưu thông tin
+    // (hoặc ẩn/hiện) có thể ghi đè số tồn mà khách vừa đặt hàng làm giảm. Cùng cách khóa với lúc khách đặt.
     private Material find(Integer id) {
-        return materialRepository.findById(id)
+        return materialRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nguyên liệu."));
     }
 

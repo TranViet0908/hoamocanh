@@ -102,6 +102,16 @@
         const safeGift = u => typeof u === 'string' && u.startsWith('/uploads/gift/') && !u.includes('..') ? u : null;
         const safeProd = u => typeof u === 'string' && u.startsWith('/uploads/product/') && !u.includes('..') ? u : null;
         const studio = o.deliveryType === 'DELIVERY' || o.deliveryType === 'STUDIO_PICKUP';
+        const giftBtn = (part, text) => `<button type="button" class="adm-btn bad" data-gift="${part}">${text}</button>`;
+        const giftActions = `<div class="od-actions" style="margin-top:10px">
+            ${o.giftMessage ? giftBtn('message', 'Gỡ lời chúc') : ''}${safeGift(o.giftImageUrl) ? giftBtn('image', 'Gỡ ảnh') : ''}
+            ${safeGift(o.giftVideoUrl) ? giftBtn('video', 'Gỡ video') : ''}${safeGift(o.bouquetImageUrl) ? giftBtn('bouquet', 'Gỡ hình mô phỏng') : ''}
+            ${o.giftUrl ? '<button type="button" class="adm-btn bad" data-gift="regen">Tạo lại link và QR</button>' : ''}</div>`;
+        const samplesHtml = (o.sampleImages || []).filter(s => safeGift(s.url)).length
+            ? `<div style="display:flex;gap:10px;margin:0 0 10px">${(o.sampleImages || []).filter(s => safeGift(s.url)).map(s =>
+                `<figure style="margin:0;flex:1;min-width:0"><img src="${esc(safeGift(s.url))}" alt="${esc(s.caption)}" style="display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px">
+                <figcaption class="adm-muted" style="font-size:12px;margin-top:4px">${esc(s.caption)}</figcaption></figure>`).join('')}</div>` : '';
+        const cardSec = studio && o.giftMessage ? `<div class="od-sec"><h3>Nội dung thiệp</h3><div class="od-gift">${esc(o.giftMessage)}</div></div>` : '';
         const canPhoto = studio && ['IN_PROGRESS', 'AWAITING_APPROVAL'].includes(o.status);
         const photoSec = studio && (safeProd(o.finishedImageUrl) || canPhoto) ? `<div class="od-sec"><h3>Ảnh thành phẩm</h3>
             ${safeProd(o.finishedImageUrl) ? `<img src="${esc(safeProd(o.finishedImageUrl))}" alt="Ảnh thành phẩm" style="max-width:100%;border-radius:10px">`
@@ -115,6 +125,7 @@
             <span>${o.buyerName ? 'Người nhận' : 'Họ tên'}</span><b>${esc(o.customerName)}</b>
             <span>Liên hệ</span><div><a href="tel:${esc(digits(o.phone))}">${esc(o.phone)}</a> · <a href="https://zalo.me/${esc(digits(o.phone))}" target="_blank" rel="noopener">Zalo</a></div>
             ${o.buyerName ? `<span>Người đặt</span><div><b>${esc(o.buyerName)}</b> · <a href="tel:${esc(digits(o.buyerPhone))}">${esc(o.buyerPhone)}</a> · <a href="https://zalo.me/${esc(digits(o.buyerPhone))}" target="_blank" rel="noopener">Zalo</a></div>` : ''}
+            ${o.bookingCode ? `<span>Mã đặt lịch</span><b>${esc(o.bookingCode)}</b>` : ''}
             <span>Hình thức</span><b>${TYPE[o.deliveryType] || esc(o.deliveryType)}</b>
             ${o.deliveryType === 'ONLINE' ? '' : `<span>${o.deliveryType === 'PICKUP' ? 'Khách đến lúc' : o.deliveryType === 'STUDIO_PICKUP' ? 'Khách đến nhận lúc' : 'Giao lúc'}</span><b>${fmt(o.deliveryTime)}</b>`}
             ${o.shippingAddress ? `<span>Địa chỉ</span><div>${esc(o.shippingAddress)}</div>` : ''}
@@ -123,6 +134,9 @@
           <div class="od-sec"><h3>Thiết kế của khách</h3>
             <p style="margin:0 0 8px">${esc([o.productTypeName, o.style, o.themeColor].filter(Boolean).join(' · '))}</p>
             ${o.styleNote ? `<p class="adm-muted" style="white-space:pre-line;margin:0 0 8px">${esc(o.styleNote)}</p>` : ''}
+            ${safeGift(o.bouquetImageUrl) ? `<img src="${esc(safeGift(o.bouquetImageUrl))}" alt="Hình mô phỏng khách đã chốt" style="display:block;width:100%;max-height:360px;object-fit:cover;border-radius:12px;margin:0 0 4px">
+              <p class="adm-muted" style="margin:0 0 10px;font-size:12px">Hình mô phỏng khách đã chốt, chỉ mang tính tham khảo. Sản phẩm thực tế theo nguyên liệu bên dưới.</p>` : ''}
+            ${samplesHtml}
             ${o.items.map(i => `<div class="od-item"><img src="${esc(imgSrc(i.imageUrl))}" alt="" onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
               <div><b>${esc(i.name)}</b><br><small>× ${i.quantity}</small></div><span>${money(i.unitPrice * i.quantity)}</span></div>`).join('')}
             <div class="od-kv" style="margin-top:10px"><span>Mức giá</span><b>${money(o.totalPrice)}</b>
@@ -132,8 +146,10 @@
             ${o.giftMessage ? esc(o.giftMessage) : '<span class="adm-muted">Không có lời chúc.</span>'}
             ${safeGift(o.giftImageUrl) ? `<img src="${esc(safeGift(o.giftImageUrl))}" alt="Ảnh kèm theo">` : ''}
             ${safeGift(o.giftVideoUrl) ? `<video src="${esc(safeGift(o.giftVideoUrl))}" controls playsinline preload="metadata"></video>` : ''}</div>
-            ${o.giftUrl ? `<p style="margin:10px 0 0"><a href="${esc(o.giftUrl)}" target="_blank" rel="noopener">Mở trang quà tặng</a> · <a href="#" id="copyGift">Sao chép link</a></p>` : ''}</div>` : ''}
+            ${o.giftUrl ? `<p style="margin:10px 0 0"><a href="${esc(o.giftUrl)}" target="_blank" rel="noopener">Mở trang quà tặng</a> · <a href="#" id="copyGift">Sao chép link</a></p>` : ''}
+            ${o.status !== 'CANCELLED' ? giftActions : ''}</div>` : ''}
 
+          ${cardSec}
           ${photoSec}
 
           <div class="od-sec"><h3>Thanh toán</h3><div class="od-kv">
@@ -190,11 +206,30 @@
             toast('Đã ghi nhận thanh toán.', 'ok'); renderDetail(); load();
         } catch (ex) { toast(ex.message, 'error'); btn.disabled = false; }
     });
+    // Quản lý quà tặng: gỡ nội dung không phù hợp, tạo lại link/QR
+    $('#dwBody').addEventListener('click', async e => {
+        const b = e.target.closest('[data-gift]'); if (!b) return;
+        const part = b.dataset.gift;
+        // Bấm hai lần để xác nhận (như nút hủy đơn): lần đầu nút chuyển đỏ, bấm lại trong 4 giây mới thực hiện
+        if (!b.classList.contains('armed')) {
+            b.dataset.label = b.textContent; b.classList.add('armed');
+            b.textContent = part === 'regen' ? 'Bấm lại: link cũ sẽ hết hiệu lực' : 'Bấm lại để gỡ';
+            setTimeout(() => { if (b.isConnected && b.classList.contains('armed')) { b.classList.remove('armed'); b.textContent = b.dataset.label; } }, 4000);
+            return;
+        }
+        b.disabled = true;
+        try {
+            cur = part === 'regen'
+                ? await api(`/orders/${cur.id}/gift-link/regenerate`, { method: 'POST', body: {} })
+                : await api(`/orders/${cur.id}/gift-content?part=${part}`, { method: 'DELETE' });
+            toast(part === 'regen' ? 'Đã tạo lại link và mã QR.' : 'Đã gỡ nội dung.', 'ok'); renderDetail();
+        } catch (ex) { toast(ex.message, 'error'); b.disabled = false; }
+    });
     $('#dwBody').addEventListener('click', async e => {
         if (e.target.id !== 'copyGift') return;
         e.preventDefault();
         try { await navigator.clipboard.writeText(cur.giftUrl); toast('Đã sao chép link.', 'ok'); }
-        catch (_) { window.prompt('Sao chép link này:', cur.giftUrl); }
+        catch (_) { toast('Trình duyệt không cho tự sao chép. Hãy chọn link rồi nhấn Ctrl+C.', 'error'); }
     });
 
     // Ảnh thành phẩm: tải lên rồi gắn vào đơn; cũng dùng để gỡ ảnh

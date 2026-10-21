@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderContact(getEl('#contact'), shop);
 
     if (!last) return;
+    if (last.bookingCode) { getEl('#bookingCode').textContent = last.bookingCode; getEl('#bookingLine').hidden = false; }
 
     // ----- Gửi tặng online: QR + link -----
     if (last.deliveryType === 'ONLINE' && last.giftUrl) {
@@ -37,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await navigator.clipboard.writeText(last.giftUrl);
                 getEl('#copyLink').textContent = 'Đã sao chép ✓';
             } catch (_) {
-                window.prompt('Sao chép link này:', last.giftUrl);
+                showModal('Trình duyệt không cho tự sao chép. Hãy nhấn giữ vào đường link ở trên để sao chép.', { title: 'Sao chép link' });
             }
         };
 

@@ -1,6 +1,7 @@
 package com.hoamocanh.config;
 
 import com.hoamocanh.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -60,8 +61,16 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) -> {
-                            if (req.getRequestURI().endsWith(".html")) {
-                                res.sendRedirect("/admin/login.html");
+                            String uri = req.getRequestURI();
+                            if (uri.startsWith("/admin/")) {
+                                if (uri.endsWith(".html")) {
+                                    res.sendRedirect("/admin/login.html");
+                                } else {
+                                    json(res, 401, "Unauthorized", "Vui lòng đăng nhập để tiếp tục.");
+                                }
+                            } else if (wantsHtml(req)) {
+                                // Đường dẫn không thuộc phần nào của web: hiện trang 404 (static/error/404.html), không bắt đăng nhập
+                                res.sendError(HttpServletResponse.SC_NOT_FOUND);
                             } else {
                                 json(res, 401, "Unauthorized", "Vui lòng đăng nhập để tiếp tục.");
                             }
@@ -80,6 +89,11 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                 );
         return http.build();
+    }
+
+    private static boolean wantsHtml(HttpServletRequest req) {
+        String accept = req.getHeader("Accept");
+        return accept != null && accept.contains("text/html");
     }
 
     private static void json(HttpServletResponse res, int status, String error, String message) throws IOException {
