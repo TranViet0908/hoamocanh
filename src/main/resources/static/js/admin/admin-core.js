@@ -7,6 +7,8 @@
         { href: 'calendar.html', label: 'Lịch', icon: '▦' },
         { href: 'pricing.html', label: 'Mức giá', icon: '₫', role: 'ADMIN' },
         { href: 'staff.html', label: 'Nhân viên', icon: '☺', role: 'ADMIN' },
+        { href: 'products.html', label: 'Sản phẩm mẫu', icon: '❁' },
+        { href: 'curation.html', label: 'Mẫu & Flash sale', icon: '★' },
         { href: 'settings.html', label: 'Cài đặt', icon: '⚙' }
         // Thêm trang mới: { href: 'pricing.html', label: 'Mức giá', icon: '₫', role: 'ADMIN' }
     ];
@@ -87,5 +89,26 @@
         return { page: document.getElementById('page'), user };
     }
 
-    window.Admin = { api, esc, money, toast, mount, logout };
+    // Thanh phân trang dùng chung cho các danh sách trong trang quản trị
+    function pageNav(el, total, page, per, cb) {
+        if (!document.getElementById('admPgCss')) {
+            const st = document.createElement('style'); st.id = 'admPgCss';
+            st.textContent = '.adm-pg{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:16px 0}.adm-pg button{min-width:38px;height:38px;border:1px solid var(--line,#e5e0d3);background:#fff;border-radius:10px;cursor:pointer;font:inherit}.adm-pg button.on{background:var(--ink,#2f4538);color:#fff;border-color:var(--ink,#2f4538)}.adm-pg button[disabled]{opacity:.4;cursor:default}';
+            document.head.appendChild(st);
+        }
+        const n = Math.max(1, Math.ceil(total / per)); page = Math.min(Math.max(1, page), n);
+        if (n < 2) { el.innerHTML = ''; el.className = ''; return; }
+        const set = new Set([1, n, page - 1, page, page + 1].filter(x => x >= 1 && x <= n));
+        let h = '', last = 0;
+        [...set].sort((a, b) => a - b).forEach(x => {
+            if (x - last > 1) h += '<span aria-hidden="true" style="align-self:center">…</span>';
+            h += `<button type="button" data-p="${x}"${x === page ? ' class="on" aria-current="page"' : ''} aria-label="Trang ${x}">${x}</button>`;
+            last = x;
+        });
+        el.className = 'adm-pg'; el.setAttribute('role', 'navigation'); el.setAttribute('aria-label', 'Phân trang');
+        el.innerHTML = `<button type="button" data-p="${page - 1}"${page === 1 ? ' disabled' : ''} aria-label="Trang trước">‹</button>${h}<button type="button" data-p="${page + 1}"${page === n ? ' disabled' : ''} aria-label="Trang sau">›</button>`;
+        el.onclick = e => { const b = e.target.closest('button[data-p]'); if (b && !b.disabled) cb(+b.dataset.p); };
+    }
+
+    window.Admin = { api, esc, money, toast, mount, logout, pageNav };
 })();

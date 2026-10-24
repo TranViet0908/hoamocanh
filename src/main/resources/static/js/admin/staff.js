@@ -12,10 +12,12 @@
         return;
     }
 
-    let list = [], mode = 'create', cur = null;
+    let list = [], mode = 'create', cur = null, pg = 1;
+    const PER = 15;   // số nhân viên mỗi trang
     page.innerHTML = `
       <div class="st-hint">Khóa tài khoản hoặc đổi vai trò có hiệu lực ngay: người đó sẽ bị đăng xuất ở thao tác kế tiếp. Luôn phải còn ít nhất một quản trị viên đang hoạt động.</div>
       <div class="adm-card"><table class="adm-table"><thead><tr><th>Họ tên</th><th>Số điện thoại</th><th>Vai trò</th><th>Trạng thái</th><th>Tạo ngày</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+      <div id="pg"></div>
       <div class="adm-overlay" id="ov"></div>
       <aside class="adm-drawer" id="dw" aria-hidden="true">
         <div class="adm-drawer-head"><h2 id="dwTitle"></h2><button type="button" class="adm-btn" id="dwClose">Đóng</button></div>
@@ -37,7 +39,10 @@
     $('#pwToggle').onclick = () => setPwVisible(sf.password.type === 'password');
 
     function render() {
-        $('#rows').innerHTML = list.map(s => `<tr data-id="${s.id}" class="${s.active ? '' : 'st-off'}">
+        const pages = Math.max(1, Math.ceil(list.length / PER));
+        if (pg > pages) pg = pages;
+        Admin.pageNav($('#pg'), list.length, pg, PER, p => { pg = p; render(); });
+        $('#rows').innerHTML = list.slice((pg - 1) * PER, pg * PER).map(s => `<tr data-id="${s.id}" class="${s.active ? '' : 'st-off'}">
             <td data-label="Họ tên"><b>${esc(s.fullName)}</b>${s.self ? ' <span class="adm-muted">(bạn)</span>' : ''}${s.email ? `<br><small class="adm-muted">${esc(s.email)}</small>` : ''}</td>
             <td data-label="Số điện thoại">${esc(s.phone)}</td>
             <td data-label="Vai trò"><span class="adm-badge ${s.role === 'ADMIN' ? 'info' : ''}">${ROLE[s.role] || esc(s.role)}</span></td>

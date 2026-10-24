@@ -10,7 +10,8 @@
     const statusOf = m => m.hidden ? 'hidden' : m.stock <= 0 ? 'out' : m.stock <= m.lowStockThreshold ? 'low' : 'ok';
 
     let items = [], cats = [];
-    const f = { q: '', cat: '', status: '' };
+    const f = { q: '', cat: '', status: '', page: 1 };
+    const PER = 20;   // số nguyên liệu mỗi trang
     let editing = null, pendingImage = null;
     const timers = {};
 
@@ -28,6 +29,7 @@
       </div>
       <div class="inv-cats" id="cats"></div>
       <div id="list"></div>
+      <div id="pg"></div>
       <div class="adm-overlay" id="ov"></div>
       <aside class="adm-drawer" id="dw" aria-hidden="true">
         <div class="adm-drawer-head"><h2 id="dwTitle"></h2><button type="button" class="adm-btn" id="dwClose">Đóng</button></div>
@@ -71,7 +73,11 @@
             (!f.status || statusOf(m) === f.status) &&
             (!q || (m.name + ' ' + (m.color || '')).toLowerCase().includes(q)));
 
-        $('#list').innerHTML = list.length ? list.map(m => {
+        const pages = Math.max(1, Math.ceil(list.length / PER));
+        if (f.page > pages) f.page = pages;
+        const shown = list.slice((f.page - 1) * PER, f.page * PER);
+        Admin.pageNav($('#pg'), list.length, f.page, PER, p => { f.page = p; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        $('#list').innerHTML = list.length ? shown.map(m => {
             const s = statusOf(m), [label, cls] = STATUS[s];
             return `<div class="inv-row ${m.hidden ? 'dim' : ''}" data-id="${m.id}">
               <img class="inv-img" src="${esc(imgSrc(m.imageUrl))}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
@@ -152,9 +158,9 @@
     });
 
     // ---------- Bộ lọc ----------
-    $('#q').oninput = e => { f.q = e.target.value.trim(); render(); };
-    $('#st').onchange = e => { f.status = e.target.value; render(); };
-    $('#cats').onclick = e => { const b = e.target.closest('[data-cat]'); if (b) { f.cat = b.dataset.cat; render(); } };
+    $('#q').oninput = e => { f.q = e.target.value.trim(); f.page = 1; render(); };
+    $('#st').onchange = e => { f.status = e.target.value; f.page = 1; render(); };
+    $('#cats').onclick = e => { const b = e.target.closest('[data-cat]'); if (b) { f.cat = b.dataset.cat; f.page = 1; render(); } };
 
     // ---------- Thêm / sửa ----------
     const dw = $('#dw'), ov = $('#ov');

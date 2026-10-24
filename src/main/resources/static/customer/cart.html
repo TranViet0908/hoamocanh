@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width,initial-scale=1" name="viewport">
+    <title>Giỏ hàng — Mộc Anh</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap"
+          rel="stylesheet">
+    <link href="/css/moc-anh.css" rel="stylesheet">
+</head>
+<body>
+<main class="wrap">
+    <section class="sec"><h2>Giỏ hàng</h2>
+        <div id="c" style="font:15px 'Be Vietnam Pro',sans-serif"></div>
+    </section>
+</main>
+<script src="/js/customer/layout.js"></script>
+<script src="/js/customer/contact-fab.js"></script>
+<script>MA.mount('');
+function draw(){var c=MA.cart(),fd=MA.flashDiscount(c),el=document.getElementById('c');
+if(!c.length){el.innerHTML='<p class="empty">Giỏ hàng đang trống. <a href="/customer/products.html">Chọn mẫu hoa</a></p>';return}
+var t=0;el.innerHTML=c.map(function(l,i){t+=l.price*l.qty;return '<div style="display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #e6e1d4"><img src="'+MA.esc(l.img)+'" alt="" width="72" height="72" style="border-radius:10px;object-fit:cover"><div style="flex:1"><b>'+MA.esc(l.name)+'</b><br><span style="color:#6b6b60">Mức giá '+MA.money(l.price)+'</span></div><input type="number" min="1" max="20" value="'+l.qty+'" data-i="'+i+'" aria-label="Số lượng" style="width:64px;padding:8px;border:1px solid #d9d4c7;border-radius:8px"><b style="min-width:110px;text-align:right">'+MA.money(l.price*l.qty)+'</b><button type="button" data-d="'+i+'" aria-label="Xóa" style="border:0;background:none;cursor:pointer;font-size:20px">×</button></div>'}).join('')+
+'<p style="text-align:right;font-size:18px;margin:16px 0">'+(fd?'Giảm Flash sale: <b>-'+MA.money(fd)+'</b><br>':'')+'Tổng tạm tính: <b>'+MA.money(t-fd)+'</b></p><p style="color:#6b6b60;font-size:13px;text-align:right">Phí giao hàng và mã giảm giá được tính ở bước đặt hàng.</p><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="button button-light" id="cp" type="button">Sao chép giỏ hàng để gửi Zalo</button><a class="button button-dark" href="/customer/shop-checkout.html">Đặt hàng</a></div><p id="m" role="status" style="text-align:right"></p>';
+el.querySelectorAll('[data-i]').forEach(function(x){x.onchange=function(){var a=MA.cart();a[+x.dataset.i].qty=Math.max(1,Math.min(20,+x.value||1));MA.saveCart(a);draw()}});
+el.querySelectorAll('[data-d]').forEach(function(x){x.onclick=function(){var a=MA.cart();a.splice(+x.dataset.d,1);MA.saveCart(a);draw()}});
+document.getElementById('cp').onclick=function(){var s=MA.cart().map(function(l){return l.name+' · '+MA.money(l.price)+' × '+l.qty}).join('\n')+'\nTổng: '+MA.money(t);(navigator.clipboard?navigator.clipboard.writeText(s):Promise.reject()).then(function(){document.getElementById('m').textContent='Đã sao chép. Dán vào Zalo Mộc Anh để đặt hàng.'},function(){document.getElementById('m').textContent='Không sao chép được, vui lòng chụp màn hình giỏ hàng.'})}}
+MA.loadCuration().then(draw,draw);
+</script>
+</body>
+</html>

@@ -10,12 +10,6 @@
     <link rel="stylesheet" href="/css/moc-anh.css">
 </head>
 <body class="page-checkout">
-<header class="site-header">
-    <a class="brand" href="/customer/index.html">
-        <span class="brand-mark">MA</span>
-        <span><b>MỘC ANH</b><small>flower studio</small></span>
-    </a>
-</header>
 <main id="main-content" class="flow">
     <div class="flow-shell">
         <p class="eyebrow">Tra cứu</p>
@@ -35,6 +29,7 @@
             <p id="resBooking" hidden></p>
             <p id="resStatus"></p>
             <p id="resPay"></p>
+            <div id="resItems"></div>
             <p id="resTime" hidden></p>
             <div id="photoBlock" hidden>
                 <h4 style="margin-top:18px">Ảnh thành phẩm</h4>
@@ -62,6 +57,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="/js/customer/modal.js?v=20261020"></script>
 <script src="/js/customer/order-lookup.js"></script>
+<script src="/js/customer/layout.js"></script>
+<script>MA.mount('lookup',{nofilter:true});</script>
 <script src="/js/customer/contact-fab.js"></script>
 </body>
 </html>

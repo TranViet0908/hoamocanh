@@ -23,6 +23,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AdminOrderService {
 
+    private final OrderItemRepository orderItemRepository;   // dòng mẫu có sẵn của đơn mua từ giỏ hàng
+
     private static final Set<String> STATUSES = Set.of("PENDING", "CONFIRMED", "PREPARING", "IN_PROGRESS",
             "AWAITING_APPROVAL", "READY", "COMPLETED", "CANCELLED");
     private static final Set<String> PAY_METHODS = Set.of("CASH", "BANK_TRANSFER", "MOMO");
@@ -85,9 +87,9 @@ public class AdminOrderService {
     // ---------- Đọc ----------
     @Transactional(readOnly = true)
     public List<OrderListRes> getAllOrders() {
-        return orderRepository.findRecent(PageRequest.of(0, 300)).stream().map(o -> new OrderListRes(
+        return orderRepository.findRecent(PageRequest.of(0, 2000)).stream().map(o -> new OrderListRes(
                 o.getId(), "MA-" + o.getId(), o.getReceiverName(), o.getReceiverPhone(),
-                o.getProductType() == null ? null : o.getProductType().getName(),
+                o.getProductType() == null ? "Mẫu có sẵn" : o.getProductType().getName(),
                 o.getDeliveryType(), normalize(o.getStatus()),
                 o.getPaymentStatus() == null ? "UNPAID" : o.getPaymentStatus(),
                 payable(o), o.getDeliveryTime(), o.getCreatedAt())).toList();
@@ -264,6 +266,15 @@ public class AdminOrderService {
                 .map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    /** Nguyên liệu (đơn tự thiết kế) + các dòng mẫu có sẵn (đơn mua từ giỏ hàng). */
+    private List<OrderDetailRes.Item> itemsOf(Order o) {
+        List<OrderDetailRes.Item> out = new ArrayList<>(o.getOrderDetails().stream().map(d -> new OrderDetailRes.Item(
+                d.getMaterial().getName(), d.getQuantity(), d.getUnitPrice(), d.getMaterial().getImageUrl())).toList());
+        orderItemRepository.findByOrderIdOrderByIdAsc(o.getId()).forEach(i -> out.add(new OrderDetailRes.Item(
+                i.getSampleName(), i.getQuantity(), i.getUnitPrice(), i.getImageUrl())));
+        return out;
+    }
+
     private OrderDetailRes toDetail(Order o) {
         List<Payment> pays = paymentRepository.findByOrderIdOrderByIdAsc(o.getId());
         String status = normalize(o.getStatus());
@@ -274,8 +285,7 @@ public class AdminOrderService {
                 o.getProductType() == null ? null : o.getProductType().getName(), o.getStyle(), o.getThemeColor(), o.getStyleNote(),
                 o.getTotalPrice(), o.getDiscountAmount() == null ? BigDecimal.ZERO : o.getDiscountAmount(), payable(o), paidOf(pays),
                 o.getGiftMessage(), o.getGiftImageUrl(), o.getGiftVideoUrl(), o.getQrCodeUrl(),
-                o.getOrderDetails().stream().map(d -> new OrderDetailRes.Item(
-                        d.getMaterial().getName(), d.getQuantity(), d.getUnitPrice(), d.getMaterial().getImageUrl())).toList(),
+                itemsOf(o),
                 pays.stream().map(p -> new OrderDetailRes.Pay(p.getId(), p.getAmount(), p.getPaymentMethod(),
                         p.getPaymentType(), p.getPaymentStatus(), p.getTransactionCode(), p.getCreatedAt())).toList(),
                 historyRepository.findByOrderIdOrderByIdAsc(o.getId()).stream().map(h -> new OrderDetailRes.Hist(

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width,initial-scale=1" name="viewport">
+    <title>Chi tiết mẫu hoa — Mộc Anh</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap"
+          rel="stylesheet">
+    <link href="/css/moc-anh.css" rel="stylesheet">
+</head>
+<body>
+<main class="wrap">
+    <div id="d"
+         style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;margin-top:22px;font:15px/1.6 'Be Vietnam Pro',sans-serif">
+        <p class="empty">Đang tải…</p></div>
+    <div id="sim"></div>
+    <div id="why"></div>
+</main>
+<script src="/js/customer/layout.js"></script>
+<script src="/js/customer/contact-fab.js"></script>
+<script>MA.mount('all');var id=new URLSearchParams(location.search).get('id');
+MA.ready().then(function(L){var p=L.filter(function(x){return x.id===id})[0],d=document.getElementById('d');
+if(!p){d.innerHTML='<p class="empty">Không tìm thấy mẫu này. <a href="/customer/products.html">Xem tất cả sản phẩm</a></p>';return}
+var mp=MA.minPrice(p),opts='';for(var v=mp;v<=1500000;v+=100000)opts+='<option value="'+v+'">'+MA.money(v)+'</option>';
+var ing=(p.ingredients&&p.ingredients.length)?MA.esc(p.ingredients.join(', ')):'Mộc Anh tư vấn thành phần theo hoa tươi trong ngày';
+if(window.innerWidth<860)d.style.gridTemplateColumns='1fr';
+d.innerHTML='<img src="'+MA.esc(p.photo_url)+'" alt="'+MA.esc(MA.sample(p))+'" style="width:100%;border-radius:16px;display:block"><div><h1 style="font:600 30px \'Playfair Display\',Georgia,serif;margin:0 0 4px;color:#2f4538">'+MA.esc(MA.sample(p))+'</h1><p style="margin:0 0 14px;color:#6b6b60">'+MA.esc(MA.kinds[p.kind])+'</p><p><b>Thành phần hoa:</b> '+ing+'</p>'+
+'<div id="mua" style="background:#eef1ea;border-radius:14px;padding:16px;margin:16px 0"><label for="pr" style="display:block;font-weight:600;margin-bottom:6px">Chọn mức giá của bạn</label><select id="pr" style="padding:10px;border-radius:10px;border:1px solid #d9d4c7;width:100%;font:inherit">'+opts+'</select><p id="fl" style="color:#b25a4e;font-weight:600;margin:10px 0 0" hidden></p><label for="qt" style="display:block;font-weight:600;margin:12px 0 6px">Số lượng</label><input id="qt" type="number" min="1" max="20" value="1" style="padding:10px;border-radius:10px;border:1px solid #d9d4c7;width:90px;font:inherit">'+
+'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px"><button class="button button-dark" id="buy" type="button">Mua ngay</button><button class="button button-light" id="addc" type="button">Thêm vào giỏ</button></div><p id="ok" style="color:#2f4538;margin:10px 0 0" role="status"></p></div>'+
+'<div style="display:flex;flex-wrap:wrap;gap:8px"><a class="button button-light" href="/customer/design.html?sample='+encodeURIComponent(p.id)+'&kind='+encodeURIComponent(p.kind)+'&budget='+mp+'">Tự thiết kế theo mẫu này</a><a class="button button-light" href="#" data-zalo>Tư vấn thêm</a></div>'+
+'<p style="font-size:13px;color:#6b6b60;margin-top:16px">Điều kiện đặt hàng: nhận order trước 18g mỗi ngày, giờ phục vụ 7g30–18g. Giao hàng tận nơi hoặc nhận tại tiệm. Hình ảnh mang tính mô phỏng, sản phẩm thực tế thay đổi theo nguồn hoa tươi trong ngày.</p></div>';
+if(MA.isFlash(p)){var fe=document.getElementById('fl');fe.hidden=false;fe.textContent='Flash sale: giảm '+MA.flash.percent+'% khi đặt trước '+MA.flash.end+' hôm nay'}
+function go(){MA.add(p,+document.getElementById('pr').value,Math.max(1,Math.min(20,+document.getElementById('qt').value||1)))}
+document.getElementById('addc').onclick=function(){go();document.getElementById('ok').textContent='Đã thêm vào giỏ hàng.'};
+document.getElementById('buy').onclick=function(){go();location.href='/customer/cart.html'};
+var sim=L.filter(function(x){return x.kind===p.kind&&x.id!==p.id}).slice(0,4);
+document.getElementById('sim').innerHTML=MA.section('Những mẫu tương tự bạn có thể thích',sim,'/customer/products.html?kind='+p.kind);document.getElementById('why').innerHTML=MA.why();
+MA.zalo().then(function(s){var z=String(s.zalo||'0372899123').replace(/\D/g,'');document.querySelectorAll('[data-zalo]').forEach(function(a){a.href='https://zalo.me/'+z;a.target='_blank'})})});
+</script>
+</body>
+</html>

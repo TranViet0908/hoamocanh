@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width,initial-scale=1" name="viewport">
+    <title>Đăng nhập — Mộc Anh</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap"
+          rel="stylesheet">
+    <link href="/css/moc-anh.css" rel="stylesheet">
+</head>
+<body>
+<main class="wrap">
+    <section class="sec"><h2 id="t">Đăng nhập</h2>
+        <form class="fm" id="f" novalidate>
+            <div hidden id="nw"><label for="nm">Họ và tên</label><input autocomplete="name" id="nm" maxlength="100">
+            </div>
+            <label for="ph">Số điện thoại</label><input autocomplete="username" id="ph" inputmode="tel" required
+                                                        type="tel">
+            <label for="pw">Mật khẩu <small hidden id="hint">(từ 6 ký tự)</small></label><input autocomplete="current-password" id="pw"
+                                                                                                required
+                                                                                                type="password">
+            <p class="err" hidden id="err" role="alert"></p>
+            <button class="button button-dark" id="go" type="submit">Đăng nhập</button>
+            <p><a href="#" id="sw">Chưa có tài khoản? Đăng ký</a></p></form>
+        <p style="color:#6b6b60;max-width:60ch">Bạn không cần đăng nhập để mua hoa. Tài khoản giúp xem lại đơn và điền
+            sẵn thông tin.</p></section>
+</main>
+<script src="/js/customer/layout.js"></script>
+<script src="/js/customer/contact-fab.js"></script>
+<script>MA.mount('',{nofilter:true});var reg=false,$=function(i){return document.getElementById(i)};
+var nx=new URLSearchParams(location.search).get('next');if(!nx||nx.indexOf('/customer/')!==0)nx='/customer/account.html';
+$('sw').onclick=function(e){e.preventDefault();reg=!reg;$('t').textContent=reg?'Đăng ký':'Đăng nhập';$('nw').hidden=!reg;$('hint').hidden=!reg;$('go').textContent=reg?'Tạo tài khoản':'Đăng nhập';this.textContent=reg?'Đã có tài khoản? Đăng nhập':'Chưa có tài khoản? Đăng ký';$('pw').autocomplete=reg?'new-password':'current-password'};
+$('f').onsubmit=function(e){e.preventDefault();var er=$('err');er.hidden=true;$('go').disabled=true;
+fetch('/customer/auth/'+(reg?'register':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:$('ph').value,password:$('pw').value,fullName:$('nm').value})})
+.then(function(r){return r.json().catch(function(){return null}).then(function(d){if(!r.ok)throw new Error((d&&d.message)||'Lỗi máy chủ ('+r.status+')');location.href=nx})})
+.catch(function(x){er.textContent=x.message;er.hidden=false;$('go').disabled=false})};
+</script>
+</body>
+</html>

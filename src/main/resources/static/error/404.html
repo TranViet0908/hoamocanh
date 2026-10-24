@@ -1,40 +1,51 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="robots" content="noindex,nofollow">
+  <script>document.documentElement.classList.add("js")</script>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
   <title>Không tìm thấy trang — Mộc Anh</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/moc-anh.css">
   <style>
-    .err-code{font:500 clamp(72px,18vw,128px)/1 'Playfair Display',Georgia,serif;color:#c9a7a0;margin:8px 0 0;letter-spacing:2px}
-    .err-box{text-align:center;padding:40px 0}
-    .err-box .mt-actions{justify-content:center;margin-top:24px}
-    .err-box p.err-copy{max-width:460px;margin:12px auto 0;line-height:1.7;color:#555}
+    .err-hero{min-height:calc(100vh - 0px);display:grid;align-items:center}
+    .err-code{font:italic 500 clamp(96px,22vw,190px)/.95 var(--serif);color:#c9a7a0;margin:0 0 6px;letter-spacing:-.02em;animation:bob 5s ease-in-out infinite}
+    .err-hero h1{font-size:clamp(34px,6vw,60px)}
+    .err-copy{max-width:460px;margin:16px 0 28px;color:var(--muted);line-height:1.75}
+    .err-in .mt-actions{justify-content:flex-start;margin:0}.err-note{font-size:12.5px;color:#8a8a8a;margin-top:22px;max-width:460px}
+    .err-hero .hero-photo{animation:bob 7s ease-in-out infinite reverse}
+    @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+    .err-in>*{animation:fade .9s ease both}.err-in>*:nth-child(2){animation-delay:.1s}.err-in>*:nth-child(3){animation-delay:.2s}.err-in>*:nth-child(4){animation-delay:.3s}.err-in>*:nth-child(5){animation-delay:.4s}
   </style>
 </head>
-<body class="page-checkout">
-<header class="site-header">
-  <a class="brand" href="/customer/index.html">
-    <span class="brand-mark">MA</span>
-    <span><b>MỘC ANH</b><small>flower studio</small></span>
-  </a>
-</header>
-<main id="main-content" class="flow">
-  <div class="flow-shell err-box">
-    <p class="eyebrow">Lỗi 404</p>
-    <p class="err-code" aria-hidden="true">404</p>
-    <h2>Trang này <i>không tồn tại</i></h2>
-    <p class="err-copy">Đường dẫn có thể đã bị đổi hoặc gõ chưa đúng. Bạn hãy quay lại hoặc về trang chủ để tiếp tục thiết kế hoa nhé.</p>
-    <div class="mt-actions">
-      <a class="button button-dark" id="home" href="/customer/index.html">Về trang chủ →</a>
-      <button type="button" class="button button-light" id="back">← Quay lại</button>
+<body class="page-home">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-gift" viewBox="0 0 48 48"><rect x="8" y="22" width="32" height="18" rx="2"/><path d="M6 15h36v7H6zM24 15v25M24 15c-3-7-11-7-11-3s8 3 11 3zM24 15c3-7 11-7 11-3s-8 3-11 3z"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 48 48"><circle cx="13" cy="34" r="5"/><circle cx="13" cy="14" r="5"/><path d="M17 17l23 18M17 31L40 13"/></symbol>
+  <symbol id="i-box" viewBox="0 0 48 48"><path d="M6 15l18-8 18 8v19l-18 8-18-8z"/><path d="M6 15l18 8 18-8M24 23v19"/></symbol>
+  <symbol id="i-bloom" viewBox="0 0 48 48"><circle cx="24" cy="24" r="4"/><circle cx="24" cy="12" r="7"/><circle cx="36" cy="24" r="7"/><circle cx="24" cy="36" r="7"/><circle cx="12" cy="24" r="7"/></symbol>
+</svg>
+<main id="main-content">
+  <section class="hero err-hero">
+    <div class="petals" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="hero-inner">
+      <div class="err-in">
+        <p class="eyebrow">Lỗi 404</p>
+        <p class="err-code" aria-hidden="true">404</p>
+        <h1>Trang này <i>không tồn tại</i></h1>
+        <p class="err-copy">Đường dẫn có thể đã bị đổi hoặc gõ chưa đúng. Bạn hãy quay lại hoặc về trang chủ để tiếp tục chọn hoa nhé.</p>
+        <div class="mt-actions">
+          <a class="button button-dark" id="home" href="/customer/index.html">Về trang chủ →</a>
+          <button type="button" class="button button-light" id="back">← Quay lại</button>
+        </div>
+        <p class="err-note">Nếu lỗi cứ lặp lại, bạn hãy bấm "Liên hệ tiệm" ở góc màn hình để Mộc Anh hỗ trợ.</p>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-photo"><img src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=85" alt="Bó hoa tươi tone hồng kem"></div>
+        <div class="hero-chip"><span><b>Mộc Anh</b>hoa tươi cho từng người bạn thương</span></div>
+      </div>
     </div>
-    <p class="err-copy" style="font-size:12.5px;color:#8a8a8a">Nếu lỗi cứ lặp lại, bạn hãy bấm "Liên hệ tiệm" ở góc màn hình để Mộc Anh hỗ trợ.</p>
-  </div>
+  </section>
 </main>
 <script>
   (function () {

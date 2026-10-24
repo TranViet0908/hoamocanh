@@ -58,6 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
         $('#resPay').textContent = `${PAY[d.paymentStatus] || d.paymentStatus} · Tổng ${money(d.payableAmount)}`
             + (dep > 0 ? ` · Tiền cọc ${money(dep)}` : '')
             + (Number(d.shippingFee || 0) > 0 ? ` · Gồm phí giao ${money(d.shippingFee)}` : '');
+        const itemsEl = $('#resItems');   // trang cũ chưa có khung này thì bỏ qua, không làm hỏng phần còn lại
+        if (itemsEl) itemsEl.innerHTML = (d.items || []).map(i => `<p style="margin:6px 0">${String(i.name).replace(/[&<>"']/g, ch => '&#' + ch.charCodeAt(0) + ';')} × ${i.quantity} · ${money(i.unitPrice)}</p>`).join('');
         if (d.deliveryTime) {
             const t = new Date(d.deliveryTime);
             $('#resTime').textContent = 'Thời gian hẹn: ' + (isNaN(t) ? d.deliveryTime : t.toLocaleString('vi-VN'));

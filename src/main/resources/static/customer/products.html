@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width,initial-scale=1" name="viewport">
+    <title>Sản phẩm — Mộc Anh</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap"
+          rel="stylesheet">
+    <link href="/css/moc-anh.css" rel="stylesheet">
+</head>
+<body>
+<main class="wrap">
+    <section class="sec">
+        <div class="sec-h"><h2 id="ttl">Tất cả sản phẩm</h2><span><a hidden href="/customer/products.html" id="clr">Xóa bộ lọc</a></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px;font:14px 'Be Vietnam Pro',sans-serif">
+            <span id="cnt" role="status"></span><label>Sắp xếp <select id="sort"
+                                                                       style="padding:8px 10px;border:1px solid #d9d4c7;border-radius:10px;font:inherit">
+            <option value="">Mặc định</option>
+            <option value="asc">Giá thấp đến cao</option>
+            <option value="desc">Giá cao đến thấp</option>
+        </select></label></div>
+        <div class="mg" id="g"></div>
+        <p class="empty" hidden id="e"></p>
+        <div id="pg"></div>
+    </section>
+</main>
+<script src="/js/customer/layout.js"></script>
+<script src="/js/customer/contact-fab.js"></script>
+<script>var q=new URLSearchParams(location.search),PER=24,base=[],list=[],info='',pg=Math.max(1,parseInt(q.get('page'),10)||1),sortEl=document.getElementById('sort');MA.mount(q.get('flash')?'flash':'all');
+sortEl.value=q.get('sort')||'';if(sortEl.value!==(q.get('sort')||''))sortEl.value='';
+function apply(){var v=sortEl.value;list=base.slice();if(v==='asc')list.sort(function(a,b){return MA.minPrice(a)-MA.minPrice(b)});else if(v==='desc')list.sort(function(a,b){return MA.minPrice(b)-MA.minPrice(a)})}
+function url(){var u=new URLSearchParams(location.search);pg>1?u.set('page',pg):u.delete('page');sortEl.value?u.set('sort',sortEl.value):u.delete('sort');var s=u.toString();try{history.replaceState(null,'',location.pathname+(s?'?'+s:''))}catch(e){}}
+function draw(){var n=Math.max(1,Math.ceil(list.length/PER));if(pg>n)pg=n;var s=(pg-1)*PER,part=list.slice(s,s+PER);
+document.getElementById('g').innerHTML=part.map(MA.card).join('');
+document.getElementById('cnt').textContent=list.length?'Hiển thị '+(s+1)+'–'+(s+part.length)+' / '+list.length+' mẫu'+info:'';
+MA.pageNav(document.getElementById('pg'),list.length,pg,PER,function(p){pg=p;url();draw();document.getElementById('ttl').scrollIntoView({behavior:'smooth'})});url();
+MA.zalo().then(function(z){var d=String(z.zalo||'0372899123').replace(/\D/g,'');document.querySelectorAll('#g [data-zalo]').forEach(function(a){a.href='https://zalo.me/'+d;a.target='_blank'})})}
+sortEl.onchange=function(){apply();pg=1;draw()};
+MA.ready().then(function(L){var kind=q.get('kind'),tone=q.get('tone'),occ=q.get('occasion'),pr=q.get('price'),term=(q.get('q')||'').toLowerCase().trim();
+if(kind)L=L.filter(function(p){return p.kind===kind});if(tone){var tid=(MA.curation.tones||{})[tone]||[];L=L.filter(function(p){return tid.indexOf(p.id)>-1})}if(occ)L=MA.byOcc(L,occ);
+if(pr){var r=pr.split('-'),lo=+r[0]||0,hi=+r[1]||Infinity;L=L.filter(function(p){return MA.minPrice(p)>=lo&&MA.minPrice(p)<=hi})}
+if(term)L=L.filter(function(p){return (p.code+' '+p.name).toLowerCase().indexOf(term)>-1});
+if(q.get('flash')){var F=MA.flash||{};L=F.enabled?L.filter(function(p){return F.ids.indexOf(p.id)>-1}):[]}
+base=L;apply();var t=document.getElementById('ttl'),o=MA.occ.filter(function(x){return x[1]===occ})[0],k=MA.kindMenu.filter(function(x){return x[1]===kind})[0];
+if(q.get('flash'))t.textContent='Flash sale hôm nay';else if(o)t.textContent=o[0];else if(k)t.textContent=k[0];
+if(kind||occ||pr||term||tone)document.getElementById('clr').hidden=false;
+if(q.get('flash')&&L.length){var G=MA.flash;info=' · '+(G.active?'Giảm '+G.percent+'% đến '+G.end:'Bắt đầu lúc '+G.start+' hằng ngày')}
+if(!L.length){var e=document.getElementById('e');e.hidden=false;e.innerHTML=q.get('flash')?'Hôm nay chưa có chương trình flash sale. Xem <a href="/customer/products.html">tất cả mẫu</a>.':'Chưa có mẫu phù hợp. Hãy đổi bộ lọc hoặc <a href="/customer/design.html">tự thiết kế hoa tươi</a>.'}
+draw()});
+</script>
+</body>
+</html>

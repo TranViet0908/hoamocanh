@@ -763,7 +763,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     qs('#budgetText').textContent = money(state.budget);
 
     // Khởi tạo dữ liệu & Khôi phục lựa chọn cũ nếu khách quay lại từ trang Chốt đơn ("Sửa thiết kế")
-    const saved = loadSavedDesignState();
+    const pre = presetFromUrl();
+    const saved = pre ? null : loadSavedDesignState();
     await loadBudgetLevels();
     await loadProductTypes();
 
@@ -788,6 +789,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyBudgetFloor();
     }
 
+    // Đến từ một mẫu có sẵn của shop (?sample=...&kind=...&budget=...): chọn sẵn kiểu dáng và ngân sách
+    if (pre) {
+        const t = state.productTypes.find(p => pre.names.test(p.name));
+        if (t) state.productType = t;
+        if (pre.budget) state.budget = pre.budget;
+        renderProductTypes();
+        applyBudgetFloor();
+    }
+
     await loadMaterials();
 
     if (saved && Array.isArray(saved.quantities)) {
@@ -806,3 +816,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     try { history.replaceState({ step: initialStep }, '', '#step-' + initialStep); } catch (_) {}
     goTo(initialStep, false);
 });
+
+// Kiểu dáng của mẫu shop -> loại sản phẩm trong công cụ thiết kế (tên trong bảng product_types)
+function presetFromUrl() {
+    const q = new URLSearchParams(location.search);
+    if (!q.get('sample')) return null;
+    const map = { bouquet: /bó/i, basket: /giỏ/i, stand: /kệ/i, 'gift-box': /box|túi/i, 'cut-set': /mix|thả bình/i };
+    const budget = Number(q.get('budget'));
+    return {
+        names: map[q.get('kind')] || /^$/,
+        budget: budget >= 400000 && budget <= 1500000 && budget % 100000 === 0 ? budget : null
+    };
+}

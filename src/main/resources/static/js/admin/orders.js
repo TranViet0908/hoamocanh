@@ -25,7 +25,8 @@
     const digits = s => String(s || '').replace(/[^\d+]/g, '');
 
     let orders = [], cur = null, armed = false;
-    const f = { type: '', view: 'active', q: '' };
+    const f = { type: '', view: 'active', q: '', page: 1 };
+    const PER = 20;   // số đơn mỗi trang
 
     const { page } = await Admin.mount({ active: 'orders.html', title: 'Đơn hàng',
         actions: '<button type="button" class="adm-btn" id="refresh">Làm mới</button>' });
@@ -39,6 +40,7 @@
       </div>
       <div class="adm-card"><table class="adm-table od-table"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Hình thức</th>
         <th>Hẹn</th><th>Cần thu</th><th>Thanh toán</th><th>Trạng thái</th></tr></thead><tbody id="rows"></tbody></table></div>
+      <p class="adm-muted" id="cnt" style="text-align:center;margin:10px 0 0"></p><div id="pg"></div>
       <div class="adm-overlay" id="ov"></div>
       <aside class="adm-drawer" id="dw" style="width:min(560px,100%)" aria-hidden="true">
         <div class="adm-drawer-head"><div><h2 id="dwTitle"></h2><span id="dwBadge"></span></div><button type="button" class="adm-btn" id="dwClose">Đóng</button></div>
@@ -60,7 +62,12 @@
         const list = orders.filter(o => VIEWS[f.view](o) && (!f.type || o.deliveryType === f.type) &&
             (!q || String(o.id) === q || (o.customerName || '').toLowerCase().includes(q) || (o.phone || '').includes(q)));
 
-        $('#rows').innerHTML = list.length ? list.map(o => `<tr data-id="${o.id}">
+        const pages = Math.max(1, Math.ceil(list.length / PER));
+        if (f.page > pages) f.page = pages;
+        const shown = list.slice((f.page - 1) * PER, f.page * PER);
+        $('#cnt').textContent = list.length ? `Hiển thị ${(f.page - 1) * PER + 1}–${(f.page - 1) * PER + shown.length} / ${list.length} đơn` : '';
+        Admin.pageNav($('#pg'), list.length, f.page, PER, p => { f.page = p; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        $('#rows').innerHTML = list.length ? shown.map(o => `<tr data-id="${o.id}">
             <td data-label="Mã đơn"><b>${esc(o.code)}</b></td>
             <td data-label="Khách">${esc(o.customerName)}<br><small class="adm-muted">${esc(o.phone)}</small></td>
             <td data-label="Hình thức">${TYPE[o.deliveryType] || esc(o.deliveryType)}</td>
@@ -73,9 +80,9 @@
 
     async function load() { orders = await api('/orders'); render(); }
 
-    $('#tabs').onclick = e => { const b = e.target.closest('[data-type]'); if (b) { f.type = b.dataset.type; render(); } };
-    $('#q').oninput = e => { f.q = e.target.value.trim(); render(); };
-    $('#view').onchange = e => { f.view = e.target.value; render(); };
+    $('#tabs').onclick = e => { const b = e.target.closest('[data-type]'); if (b) { f.type = b.dataset.type; f.page = 1; render(); } };
+    $('#q').oninput = e => { f.q = e.target.value.trim(); f.page = 1; render(); };
+    $('#view').onchange = e => { f.view = e.target.value; f.page = 1; render(); };
     $('#refresh').onclick = () => load().then(() => toast('Đã cập nhật.', 'ok')).catch(e => toast(e.message, 'error'));
     $('#rows').onclick = e => { const tr = e.target.closest('tr[data-id]'); if (tr) openOrder(+tr.dataset.id); };
     setInterval(() => { if (!$('#dw').classList.contains('show')) load().catch(() => { }); }, 60000);   // tự làm mới mỗi phút

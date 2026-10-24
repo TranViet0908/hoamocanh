@@ -16,16 +16,9 @@
     <symbol id="i-box" viewBox="0 0 48 48"><path d="M6 15l18-8 18 8v19l-18 8-18-8z"/><path d="M6 15l18 8 18-8M24 23v19"/></symbol>
 </svg>
 <a class="skip-link" href="#main-content">Bỏ qua đến nội dung</a>
-<header class="site-header">
-    <a class="brand" href="/customer/index.html">
-        <span class="brand-mark">MA</span>
-        <span><b>MỘC ANH</b><small>flower studio</small></span>
-    </a>
-    <a class="nav-link" href="/customer/design.html">← Sửa thiết kế</a>
-</header>
-
 <main id="main-content" class="flow">
     <div class="flow-shell">
+        <p><a href="/customer/design.html">← Sửa thiết kế</a></p>
         <p class="eyebrow">Hoàn tất yêu cầu</p>
         <h2>Chốt <i>đơn</i></h2>
 
@@ -69,7 +62,6 @@
             </div>
 
             <label>Ghi chú cho tiệm<textarea name="note" rows="2"></textarea></label>
-            <label>Mã giảm giá (nếu có)<input name="voucher" autocomplete="off"></label>
 
             <div>
                 <p class="mt-sub" style="margin-top:6px">Thanh toán</p>
@@ -87,6 +79,8 @@
 
 <script src="/js/customer/modal.js"></script>
 <script src="/js/customer/checkout.js"></script>
+<script src="/js/customer/layout.js"></script>
+<script>MA.mount('design',{nofilter:true});</script>
 <script src="/js/customer/contact-fab.js"></script>
 </body>
 </html>

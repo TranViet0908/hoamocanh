@@ -54,6 +54,7 @@ public class CustomerOrderService {
     private final BookingService bookingService;
     private final OrderFeeService feeService;
     private final NotificationService notificationService;
+    private final com.hoamocanh.repository.OrderItemRepository orderItemRepository;
 
     private static boolean blank(String s) {
         return s == null || s.trim().isEmpty();
@@ -372,7 +373,9 @@ public class CustomerOrderService {
                 o.getPaymentStatus() == null ? "UNPAID" : o.getPaymentStatus(), o.getPaymentMethod(),
                 payableOf(o), o.getShippingFee(), o.getDepositRequired(), o.getDeliveryTime(),
                 "ONLINE".equals(o.getDeliveryType()) ? o.getQrCodeUrl() : null,
-                showPhoto ? o.getFinishedImageUrl() : null, o.getBookingCode());
+                showPhoto ? o.getFinishedImageUrl() : null, o.getBookingCode(),
+                orderItemRepository.findByOrderIdOrderByIdAsc(o.getId()).stream()
+                        .map(i -> new OrderLookupRes.Item(i.getSampleName(), i.getQuantity(), i.getUnitPrice(), i.getImageUrl())).toList());
     }
 
     private static final String BOOKING_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // bỏ ký tự dễ nhầm: I, O, 0, 1

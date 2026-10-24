@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width,initial-scale=1" name="viewport">
+    <title>Đặt hàng — Mộc Anh</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap"
+          rel="stylesheet">
+    <link href="/css/moc-anh.css" rel="stylesheet">
+</head>
+<body>
+<main class="wrap">
+    <section class="sec"><h2>Đặt hàng</h2>
+        <div id="sum"></div>
+        <form class="fm" id="f" novalidate>
+            <label>Hình thức nhận hoa</label>
+            <div class="row"><label><input checked name="dt" type="radio" value="DELIVERY"> Giao tận
+                nơi</label><label><input name="dt" type="radio" value="STUDIO_PICKUP"> Đến tiệm nhận</label></div>
+            <label for="nm">Họ và tên người nhận</label><input autocomplete="name" id="nm" maxlength="100" required>
+            <label for="ph">Số điện thoại</label><input autocomplete="tel" id="ph" inputmode="tel" required type="tel">
+            <div id="adw"><label for="ad">Địa chỉ nhận hàng</label><textarea id="ad" maxlength="500"
+                                                                             rows="2"></textarea></div>
+            <label for="tm" id="tml">Thời gian nhận hoa</label><input id="tm" required type="datetime-local">
+            <label for="cd">Nội dung thiệp <small>(không bắt buộc)</small></label><textarea id="cd" maxlength="500"
+                                                                                            rows="2"></textarea>
+            <label for="nt">Ghi chú cho tiệm <small>(không bắt buộc)</small></label><textarea id="nt" maxlength="500"
+                                                                                              rows="2"></textarea>
+            <label for="vc">Mã giảm giá <small>(áp dụng khi xác nhận đơn)</small></label><input autocomplete="off" id="vc"
+                                                                                                maxlength="50">
+            <label>Thanh toán</label>
+            <div class="row"><label><input checked name="pm" type="radio" value="CASH"> Thanh toán trực
+                tiếp</label><label><input name="pm" type="radio" value="ONLINE"> Chuyển khoản online</label></div>
+            <div class="tot" id="tot"></div>
+            <p class="err" hidden id="err" role="alert"></p>
+            <button class="button button-dark" id="go" type="submit">Xác nhận đặt hàng →</button>
+        </form>
+    </section>
+</main>
+<script src="/js/customer/layout.js"></script>
+<script src="/js/customer/contact-fab.js"></script>
+<script>MA.mount('',{nofilter:true});
+var cart=MA.cart(),ship=0,$=function(i){return document.getElementById(i)},dt=function(){return document.querySelector('[name=dt]:checked').value};
+if(!cart.length){document.querySelector('.sec').innerHTML='<p class="empty">Giỏ hàng đang trống. <a href="/customer/products.html">Chọn mẫu hoa</a></p>'}else{
+var sub=cart.reduce(function(s,l){return s+l.price*l.qty},0);
+$('sum').innerHTML=cart.map(function(l){return '<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #e6e1d4"><img src="'+MA.esc(l.img)+'" alt="" width="48" height="48" style="border-radius:8px;object-fit:cover"><span style="flex:1">'+MA.esc(l.name)+' × '+l.qty+'</span><b>'+MA.money(l.price*l.qty)+'</b></div>'}).join('');
+function tot(){var f=dt()==='DELIVERY'?ship:0,fd=MA.flashDiscount(cart);$('adw').hidden=dt()!=='DELIVERY';$('tml').textContent=dt()==='DELIVERY'?'Thời gian nhận hoa':'Thời gian đến tiệm nhận';
+$('tot').innerHTML='Tạm tính: <b>'+MA.money(sub)+'</b>'+(fd?'<br>Giảm Flash sale: <b>-'+MA.money(fd)+'</b>':'')+(f?'<br>Phí giao hàng: <b>'+MA.money(f)+'</b>':'')+'<br>Tổng cần thanh toán: <b>'+MA.money(sub+f-fd)+'</b> <small>(chưa gồm mã giảm giá)</small>'}
+fetch('/customer/orders/fees').then(function(r){return r.ok?r.json():{}}).then(function(x){ship=Number(x.shipFee||0);tot()}).catch(tot);
+MA.loadCuration().then(tot);
+document.querySelectorAll('[name=dt]').forEach(function(r){r.onchange=tot});tot();
+var n=new Date(Date.now()-new Date().getTimezoneOffset()*60000+7200000).toISOString().slice(0,16);$('tm').min=n;
+fetch('/customer/auth/me').then(function(r){return r.ok?r.json():null}).then(function(u){if(u){$('nm').value=u.name||'';$('ph').value=u.phone||''}}).catch(function(){});
+$('f').onsubmit=function(e){e.preventDefault();var er=$('err'),b=$('go');er.hidden=true;
+if(!$('tm').value){er.textContent='Vui lòng chọn thời gian nhận hoa.';er.hidden=false;return}
+b.disabled=true;var pm=document.querySelector('[name=pm]:checked').value;
+fetch('/customer/orders/shop-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:cart.map(function(l){return{sampleId:l.id,price:l.price,quantity:l.qty}}),receiverName:$('nm').value,receiverPhone:$('ph').value,deliveryType:dt(),shippingAddress:$('ad').value,deliveryTime:$('tm').value,cardMessage:$('cd').value,note:$('nt').value,voucherCode:$('vc').value,paymentMethod:pm})})
+.then(function(r){return r.json().catch(function(){return null}).then(function(d){if(!r.ok)throw new Error((d&&d.message)||'Lỗi máy chủ ('+r.status+')');return d})})
+.then(function(d){try{sessionStorage.setItem('lastOrder',JSON.stringify({orderCode:d.orderCode,bookingCode:null,deliveryType:dt(),paymentMethod:d.paymentMethod,payableAmount:d.payableAmount,shippingFee:d.shippingFee,depositAmount:null,payNowAmount:d.payNowAmount,holdUntil:null,giftUrl:null}))}catch(x){}
+MA.saveCart([]);location.href='/customer/thankyou.html?orderCode='+encodeURIComponent(d.orderCode)})
+.catch(function(x){er.textContent=x.message;er.hidden=false;b.disabled=false})}}
+</script>
+</body>
+</html>
